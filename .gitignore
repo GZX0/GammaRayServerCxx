@@ -1,0 +1,6 @@
+.idea/*
+cmake-build-debug/*
+cmake-build-relwithdebinfo/*
+cmake-build-release/*
+.vs/*
+out/*
