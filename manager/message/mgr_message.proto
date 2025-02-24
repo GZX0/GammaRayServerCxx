@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package tc;
+
+enum MgrMessageType {
+  kRelayHello = 0;
+  kRelayHeartBeat = 3;
+}
+
+message MgrMessage {
+  string client_id = 1;
+  string device_id = 2;
+  MgrMessageType type = 3;
+}

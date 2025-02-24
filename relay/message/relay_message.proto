@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package tc;
+
+enum RelayMessageType {
+  kRelayHello = 0;
+  kRelayHeartBeat = 3;
+}
+
+message RelayMessage {
+  string client_id = 1;
+  string device_id = 2;
+  RelayMessageType type = 3;
+}
