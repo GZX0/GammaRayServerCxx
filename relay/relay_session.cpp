@@ -14,9 +14,18 @@ namespace tc
 {
 
     void RelaySession::OnConnected() {
-        context_ = Get<std::shared_ptr<RelayContext>>("context");
+        auto opt_ctx = GetVar<std::shared_ptr<RelayContext>>("context");
+        if (opt_ctx.has_value()) {
+            context_ = opt_ctx.value();
+        }
         room_mgr_ = context_->GetRoomManager();
         peer_mgr_ = context_->GetPeerManager();
+
+        auto client_id = GetQueryParam("client_id");
+        if (!client_id.has_value()) {
+            LOGE("Don't have a client id, will not work!");
+            return;
+        }
     }
 
     void RelaySession::OnDisConnected() {
