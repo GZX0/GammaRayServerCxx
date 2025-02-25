@@ -3,3 +3,13 @@
 //
 
 #include "relay_peer.h"
+
+namespace tc
+{
+
+    void RelayPeer::Notify(const std::string& msg) {
+
+
+    }
+
+}

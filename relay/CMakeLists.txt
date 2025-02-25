@@ -4,11 +4,16 @@ project(GammaRayRelayServer)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(message)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(SRCS
         main.cpp
         relay_peer.cpp
+        relay_peer_mgr.cpp
+        relay_room.cpp
+        relay_room_mgr.cpp
         relay_server.cpp
+        relay_session.cpp
         relay_context.cpp
 )
 add_executable(${PROJECT_NAME} ${SRCS})

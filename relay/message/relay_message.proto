@@ -4,11 +4,19 @@ package tc;
 
 enum RelayMessageType {
   kRelayHello = 0;
-  kRelayHeartBeat = 3;
+  kRelayHeartBeat = 10;
+  kRelayTargetMessage = 20;
+}
+
+message RelayTargetMessage {
+  string from_client_id = 1;
+  string to_client_id = 2;
+  string payload = 3;
 }
 
 message RelayMessage {
-  string client_id = 1;
-  string device_id = 2;
-  RelayMessageType type = 3;
+  string client_id = 10;
+  string device_id = 20;
+  RelayMessageType type = 30;
+  RelayTargetMessage relay = 40;
 }

@@ -6,40 +6,29 @@
 #define GAMMARAYSERVER_RELAY_SERVER_H
 
 #include "tc_common_new/concurrent_hashmap.h"
-#include <asio2/asio2.hpp>
+#include "tc_common_new/ws_server.h"
 
 namespace tc
 {
 
-    class WsData {
-    public:
-        std::map<std::string, std::any> vars_;
-    };
-    using WsDataPtr = std::shared_ptr<WsData>;
+    class RelayContext;
+    class MessageListener;
 
-    class WSSession {
+    class RelayServer : public WsServer {
     public:
-        uint64_t socket_fd_;
-        int session_type_;
-        std::shared_ptr<asio2::http_session> session_ = nullptr;
-    };
+        explicit RelayServer(const std::shared_ptr<RelayContext>& ctx);
 
-    class RelayServer {
-    public:
+        void Init();
+        void Start();
+        void Exit() override;
 
     private:
-        template<typename Server>
-        void AddWebsocketRouter(const std::string& path, const Server& s);
-
-        void AddHttpGetRouter(const std::string& path,
-                              std::function<void(const std::string& path, http::web_request &req, http::web_response &rep)>&& cbk);
-
-        void AddHttpPostRouter(const std::string& path,
-                               std::function<void(const std::string& path, http::web_request &req, http::web_response &rep)>&& cbk);
+        void InitMessageListener();
 
     private:
-        std::shared_ptr<asio2::http_server> http_server_ = nullptr;
-        ConcurrentHashMap<uint64_t, std::shared_ptr<WSSession>> panel_sessions_;
+        std::shared_ptr<RelayContext> context_ = nullptr;
+        bool exit_ = false;
+        std::shared_ptr<MessageListener> msg_listener_ = nullptr;
     };
 
 }
