@@ -8,15 +8,25 @@ enum RelayMessageType {
   kRelayTargetMessage = 20;
 }
 
+message RelayHello {
+
+}
+
+message RelayHeartBeat {
+
+}
+
 message RelayTargetMessage {
-  string from_client_id = 1;
-  string to_client_id = 2;
-  string payload = 3;
+  string room_id = 10;
+  string remote_client_id = 20;
+  string payload = 30;
 }
 
 message RelayMessage {
   string client_id = 10;
   string device_id = 20;
   RelayMessageType type = 30;
-  RelayTargetMessage relay = 40;
+  RelayHello hello = 40;
+  RelayHeartBeat heartbeat = 50;
+  RelayTargetMessage relay = 60;
 }

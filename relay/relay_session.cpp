@@ -9,6 +9,7 @@
 #include "relay_peer_mgr.h"
 #include "relay_context.h"
 #include "message/relay_message.pb.h"
+#include "tc_common_new/time_ext.h"
 
 namespace tc
 {
@@ -26,10 +27,27 @@ namespace tc
             LOGE("Don't have a client id, will not work!");
             return;
         }
+
+        auto device_id = GetQueryParam("device_id");
+        if (!device_id.has_value()) {
+            LOGE("Don't have a device id, will not work!");
+            return;
+        }
+
+        this->client_id_ = client_id.value();
+        this->device_id_ = device_id.value();
+
+        auto peer = std::make_shared<RelayPeer>();
+        peer->client_id_ = this->client_id_;
+        peer->device_id_ = this->device_id_;
+        peer->socket_fd_ = socket_fd_;
+        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+        peer->sess_ = shared_from_this();
+        peer_mgr_->AddPeer(peer);
     }
 
     void RelaySession::OnDisConnected() {
-
+        peer_mgr_->RemovePeer(this->device_id_);
     }
 
     void RelaySession::OnBinMessage(std::string_view data) {
@@ -44,7 +62,59 @@ namespace tc
     }
 
     void RelaySession::ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg) {
-
+        auto type = msg->type();
+        if (type == RelayMessageType::kRelayHello) {
+            ProcessHelloMessage(std::move(msg));
+        }
+        else if (type == RelayMessageType::kRelayHeartBeat) {
+            ProcessHeartbeatMessage(std::move(msg));
+        }
+        else if (type == RelayMessageType::kRelayTargetMessage) {
+            ProcessRelayTargetMessage(std::move(msg));
+        }
     }
 
+    void RelaySession::ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg) {
+        auto client_id = msg->client_id();
+        auto sub = msg->heartbeat();
+        auto wk_peer = peer_mgr_->FindPeer(client_id);
+        auto peer = wk_peer.lock();
+        if (!peer) {
+            LOGE("Can't find peer for: {}", client_id);
+            return;
+        }
+        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+    }
+
+    void RelaySession::ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg) {
+        auto client_id = msg->client_id();
+        auto sub = msg->heartbeat();
+        auto wk_peer = peer_mgr_->FindPeer(client_id);
+        auto peer = wk_peer.lock();
+        if (!peer) {
+            LOGE("Can't find peer for: {}", client_id);
+            return;
+        }
+        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+    }
+
+    void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg) {
+        auto client_id = msg->client_id();
+        auto sub = msg->relay();
+        const auto& remote_client_id = sub.remote_client_id();
+        auto opt_room = room_mgr_->FindRoom(sub.room_id());
+        if (!opt_room.has_value()) {
+            LOGW("Can't find room for id: {}, request client id: {}", sub.room_id(), client_id);
+            return;
+        }
+
+        auto wk_room = opt_room.value();
+        auto room = wk_room.lock();
+        if (!room) {
+            LOGW("Room: {} already destroyed.", sub.room_id());
+            return;
+        }
+
+        room->NotifyTarget(remote_client_id, sub.payload());
+    }
 }

@@ -6,6 +6,7 @@
 #define GAMMARAYSERVER_RELAY_SESSION_H
 
 #include "tc_common_new/ws_server.h"
+#include "message/relay_message.pb.h"
 
 namespace tc
 {
@@ -15,9 +16,8 @@ namespace tc
     class RelayRoom;
     class RelayRoomManager;
     class RelayContext;
-    class RelayMessage;
 
-    class RelaySession : public WsSession {
+    class RelaySession : public WsSession, public std::enable_shared_from_this<RelaySession> {
     public:
         void OnConnected() override;
         void OnDisConnected() override;
@@ -25,11 +25,16 @@ namespace tc
 
     private:
         void ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg);
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
         std::shared_ptr<RelayPeerManager> peer_mgr_ = nullptr;
+        std::string device_id_;
+        std::string client_id_;
     };
 
 }
