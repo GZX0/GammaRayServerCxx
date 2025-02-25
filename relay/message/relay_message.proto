@@ -6,6 +6,10 @@ enum RelayMessageType {
   kRelayHello = 0;
   kRelayHeartBeat = 10;
   kRelayTargetMessage = 20;
+  kRelayCreateRoom = 30;
+  kRelayCreateRoomResp = 40;
+  kRelayRequestControl = 50;
+  kRelayRequestControlResp = 60;
 }
 
 message RelayHello {
@@ -22,6 +26,22 @@ message RelayTargetMessage {
   string payload = 30;
 }
 
+message RelayCreateRoomMessage {
+
+}
+
+message RelayCreateRoomRespMessage {
+
+}
+
+message RelayRequestControlMessage {
+
+}
+
+message RelayRequestControlRespMessage {
+
+}
+
 message RelayMessage {
   string client_id = 10;
   string device_id = 20;
@@ -29,4 +49,8 @@ message RelayMessage {
   RelayHello hello = 40;
   RelayHeartBeat heartbeat = 50;
   RelayTargetMessage relay = 60;
+  RelayCreateRoomMessage create_room = 70;
+  RelayCreateRoomRespMessage create_room_resp = 80;
+  RelayRequestControlMessage request_control = 90;
+  RelayRequestControlRespMessage request_control_resp = 100;
 }
