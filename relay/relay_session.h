@@ -11,8 +11,8 @@
 namespace tc
 {
 
-    class RelayPeer;
-    class RelayPeerManager;
+    class RelayClient;
+    class RelayClientManager;
     class RelayRoom;
     class RelayRoomManager;
     class RelayContext;
@@ -24,15 +24,18 @@ namespace tc
         void OnBinMessage(std::string_view data) override;
 
     private:
-        void ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
         void ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg);
         void ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg);
         void ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessCreateRoomMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessRequestControlMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
+        void ProcessRequestControlRespMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
-        std::shared_ptr<RelayPeerManager> peer_mgr_ = nullptr;
+        std::shared_ptr<RelayClientManager> client_mgr_ = nullptr;
         std::string device_id_;
         std::string client_id_;
     };

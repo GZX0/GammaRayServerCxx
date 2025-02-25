@@ -13,14 +13,14 @@ namespace tc
 {
 
     class MessageLooper;
-    class RelayPeerManager;
+    class RelayClientManager;
     class RelayRoomManager;
 
     class RelayContext : public std::enable_shared_from_this<RelayContext> {
     public:
         explicit RelayContext(const std::shared_ptr<MessageLooper>& looper);
         bool Init();
-        std::shared_ptr<RelayPeerManager> GetPeerManager();
+        std::shared_ptr<RelayClientManager> GetPeerManager();
         std::shared_ptr<RelayRoomManager> GetRoomManager();
         std::shared_ptr<MessageListener> CreateListener();
 
@@ -36,7 +36,7 @@ namespace tc
 
     private:
         std::shared_ptr<MessageLooper> msg_looper_ = nullptr;
-        std::shared_ptr<RelayPeerManager> peer_mgr_ = nullptr;
+        std::shared_ptr<RelayClientManager> client_mgr_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
         std::shared_ptr<asio2::timer> timer_ = nullptr;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;

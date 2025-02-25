@@ -12,6 +12,18 @@ enum RelayMessageType {
   kRelayRequestControlResp = 60;
 }
 
+enum RelayCode {
+  kRelayCodeUnknown = 0;
+  kRelayCodeOk = 200;
+  kRelayCodeCreateRoomFailed = 600;
+  kRelayCodeRejectControl = 700;
+}
+
+message RelayClientInfo {
+  string client_id = 1;
+  string device_id = 2;
+}
+
 message RelayHello {
 
 }
@@ -27,19 +39,28 @@ message RelayTargetMessage {
 }
 
 message RelayCreateRoomMessage {
-
+  string remote_client_id = 10;
 }
 
 message RelayCreateRoomRespMessage {
-
+  RelayCode code = 1;
+  string remote_client_id = 10;
+  string room_id = 20;
+  repeated RelayClientInfo clients = 30;
 }
 
 message RelayRequestControlMessage {
-
+  string client_id = 10;
+  string remote_client_id = 20;
+  string room_id = 30;
 }
 
 message RelayRequestControlRespMessage {
-
+  string client_id = 10;
+  string remote_client_id = 20;
+  string room_id = 30;
+  RelayCode code = 40;
+  string message = 50;
 }
 
 message RelayMessage {

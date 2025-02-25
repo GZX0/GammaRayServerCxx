@@ -5,8 +5,10 @@
 #include <format>
 #include "relay_room_mgr.h"
 #include "relay_room.h"
-#include "relay_peer_mgr.h"
+#include "relay_client_mgr.h"
 #include "relay_context.h"
+#include "relay_client.h"
+#include "tc_common_new/log.h"
 
 namespace tc
 {
@@ -15,15 +17,22 @@ namespace tc
         context_ = ctx;
     }
 
-    std::shared_ptr<RelayRoom> RelayRoomManager::CreateRoom(const std::string& client_id, const std::string& remote_client_id) {
+    std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& client_id, const std::string& remote_client_id) {
         auto pm = context_->GetPeerManager();
-        auto client = pm->FindPeer(client_id);
-        if (!client.lock()) {
-            return nullptr;
+        // check myself
+        auto wk_client = pm->FindClient(client_id);
+        auto client = wk_client.lock();
+        if (!client|| !client->IsAlive()) {
+            LOGW("This peer[My Client] is not alive: {}", client_id);
+            return std::nullopt;
         }
-        auto remote_client = pm->FindPeer(remote_client_id);
-        if (!remote_client.lock()) {
-            return nullptr;
+
+        // check remote client
+        auto wk_remote_client = pm->FindClient(remote_client_id);
+        auto remote_client = wk_remote_client.lock();
+        if (!remote_client || !remote_client->IsAlive()) {
+            LOGW("This peer[Remote Client] is not alive: {}", remote_client_id);
+            return std::nullopt;
         }
 
         auto room = std::make_shared<RelayRoom>();
@@ -52,7 +61,7 @@ namespace tc
         return std::nullopt;
     }
 
-    std::optional<std::weak_ptr<RelayPeer>> RelayRoomManager::RemovePeerInRoom(const std::string& room_id, const std::string& peer_id) {
+    std::optional<std::weak_ptr<RelayClient>> RelayRoomManager::RemovePeerInRoom(const std::string& room_id, const std::string& peer_id) {
         if (!rooms_.HasKey(room_id)) {
             return std::nullopt;
         }

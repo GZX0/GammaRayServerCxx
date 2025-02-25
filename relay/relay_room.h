@@ -12,7 +12,7 @@
 namespace tc
 {
 
-    class RelayPeer;
+    class RelayClient;
     class RelayContext;
 
     class RelayRoom {
@@ -35,7 +35,7 @@ namespace tc
         std::string remote_client_id_;
         std::string room_id_;
 
-        ConcurrentHashMap<std::string, std::weak_ptr<RelayPeer>> peers_;
+        ConcurrentHashMap<std::string, std::weak_ptr<RelayClient>> peers_;
         std::shared_ptr<RelayContext> context_ = nullptr;
     };
 

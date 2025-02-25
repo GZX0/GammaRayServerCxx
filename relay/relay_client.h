@@ -2,8 +2,8 @@
 // Created by RGAA on 24/02/2025.
 //
 
-#ifndef GAMMARAYSERVER_RELAY_PEER_H
-#define GAMMARAYSERVER_RELAY_PEER_H
+#ifndef GAMMARAYSERVER_RELAY_CLIENT_H
+#define GAMMARAYSERVER_RELAY_CLIENT_H
 
 #include <string>
 #include <memory>
@@ -13,9 +13,10 @@ namespace tc
 
     class RelaySession;
 
-    class RelayPeer {
+    class RelayClient {
     public:
         void Notify(const std::string& msg) const;
+        bool IsAlive();
 
     public:
         std::string client_id_;
@@ -27,4 +28,4 @@ namespace tc
 
 }
 
-#endif //GAMMARAYSERVER_RELAY_PEER_H
+#endif //GAMMARAYSERVER_RELAY_CLIENT_H
