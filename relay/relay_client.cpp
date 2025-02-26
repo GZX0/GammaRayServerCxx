@@ -15,7 +15,7 @@ namespace tc
         }
     }
 
-    bool RelayClient::IsAlive() {
+    bool RelayClient::IsAlive() const {
         auto diff = last_update_timestamp_ - (int64_t)TimeExt::GetCurrentTimestamp();
         return diff < 1000 * 60;
     }

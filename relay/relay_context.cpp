@@ -25,7 +25,7 @@ namespace tc
         return true;
     }
 
-    std::shared_ptr<RelayClientManager> RelayContext::GetPeerManager() {
+    std::shared_ptr<RelayClientManager> RelayContext::GetClientManager() {
         return client_mgr_;
     }
 

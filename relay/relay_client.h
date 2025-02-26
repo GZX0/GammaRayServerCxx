@@ -16,7 +16,7 @@ namespace tc
     class RelayClient {
     public:
         void Notify(const std::string& msg) const;
-        bool IsAlive();
+        bool IsAlive() const;
 
     public:
         std::string client_id_;

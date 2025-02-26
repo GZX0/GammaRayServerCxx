@@ -22,13 +22,16 @@ namespace tc
         // failed: nullptr
         std::optional<std::shared_ptr<RelayRoom>> CreateRoom(const std::string& client_id, const std::string& remote_client_id);
 
+        //
+        std::optional<std::shared_ptr<RelayRoom>> RemoveRoom(const std::string& room_id);
+
         // found: Room weak ptr
         // not found: std::nullopt
         std::optional<std::weak_ptr<RelayRoom>> FindRoom(const std::string& room_id);
 
         // found: Peer weak ptr
         // not found: std::nullopt
-        std::optional<std::weak_ptr<RelayClient>> RemovePeerInRoom(const std::string& room_id, const std::string& peer_id);
+        std::optional<std::weak_ptr<RelayClient>> RemoveClientInRoom(const std::string& room_id, const std::string& client_id);
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;

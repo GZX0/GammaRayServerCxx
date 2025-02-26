@@ -20,7 +20,7 @@ namespace tc
     public:
         explicit RelayContext(const std::shared_ptr<MessageLooper>& looper);
         bool Init();
-        std::shared_ptr<RelayClientManager> GetPeerManager();
+        std::shared_ptr<RelayClientManager> GetClientManager();
         std::shared_ptr<RelayRoomManager> GetRoomManager();
         std::shared_ptr<MessageListener> CreateListener();
 

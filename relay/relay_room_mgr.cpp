@@ -18,7 +18,7 @@ namespace tc
     }
 
     std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& client_id, const std::string& remote_client_id) {
-        auto pm = context_->GetPeerManager();
+        auto pm = context_->GetClientManager();
         // check myself
         auto wk_client = pm->FindClient(client_id);
         auto client = wk_client.lock();
@@ -46,6 +46,11 @@ namespace tc
         return room;
     }
 
+    std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::RemoveRoom(const std::string& room_id) {
+        auto r = rooms_.Remove(room_id);
+        return r;
+    }
+
     std::optional<std::weak_ptr<RelayRoom>> RelayRoomManager::FindRoom(const std::string& room_id) {
         std::weak_ptr<RelayRoom> target_room;
         rooms_.ApplyAllCond([&] (const std::string& id, const std::shared_ptr<RelayRoom>& room) {
@@ -61,14 +66,14 @@ namespace tc
         return std::nullopt;
     }
 
-    std::optional<std::weak_ptr<RelayClient>> RelayRoomManager::RemovePeerInRoom(const std::string& room_id, const std::string& peer_id) {
+    std::optional<std::weak_ptr<RelayClient>> RelayRoomManager::RemoveClientInRoom(const std::string& room_id, const std::string& client_id) {
         if (!rooms_.HasKey(room_id)) {
             return std::nullopt;
         }
         auto room = rooms_.Get(room_id);
-        if (room->clients_.HasKey(peer_id)) {
-            auto target_peer = room->clients_.Get(peer_id);
-            return target_peer;
+        if (room->clients_.HasKey(client_id)) {
+            auto client = room->clients_.Get(client_id);
+            return client;
         }
         return std::nullopt;
     }

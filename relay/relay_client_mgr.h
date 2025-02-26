@@ -16,8 +16,11 @@ namespace tc
     class RelayClientManager {
     public:
         explicit RelayClientManager(const std::shared_ptr<RelayContext>& ctx);
+        //
         void AddClient(const std::shared_ptr<RelayClient>& peer);
-        std::shared_ptr<RelayClient> RemoveClient(const std::string& client_id);
+        //
+        std::optional<std::shared_ptr<RelayClient>> RemoveClient(const std::string& client_id);
+        //
         std::weak_ptr<RelayClient> FindClient(const std::string& client_id);
 
     private:

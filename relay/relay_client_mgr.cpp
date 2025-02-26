@@ -16,9 +16,8 @@ namespace tc
         peers_.Insert(peer->client_id_, peer);
     }
 
-    std::shared_ptr<RelayClient> RelayClientManager::RemoveClient(const std::string& client_id) {
-        auto peer = peers_.Remove(client_id);
-        return peer.has_value() ? peer.value() : nullptr;
+    std::optional<std::shared_ptr<RelayClient>> RelayClientManager::RemoveClient(const std::string& client_id) {
+        return peers_.Remove(client_id);
     }
 
     std::weak_ptr<RelayClient> RelayClientManager::FindClient(const std::string& client_id) {

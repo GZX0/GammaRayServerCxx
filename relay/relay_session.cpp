@@ -21,7 +21,7 @@ namespace tc
             context_ = opt_ctx.value();
         }
         room_mgr_ = context_->GetRoomManager();
-        client_mgr_ = context_->GetPeerManager();
+        client_mgr_ = context_->GetClientManager();
 
         auto client_id = GetQueryParam("client_id");
         if (!client_id.has_value()) {
