@@ -30,12 +30,14 @@ namespace tc
         //      client 3
         void NotifyExcept(const std::string& client_id, const std::string& msg);
 
+        std::vector<std::weak_ptr<RelayClient>> GetClients();
+
     public:
         std::string client_id_;
         std::string remote_client_id_;
         std::string room_id_;
 
-        ConcurrentHashMap<std::string, std::weak_ptr<RelayClient>> peers_;
+        ConcurrentHashMap<std::string, std::weak_ptr<RelayClient>> clients_;
         std::shared_ptr<RelayContext> context_ = nullptr;
     };
 

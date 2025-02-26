@@ -8,6 +8,7 @@
 #include "relay_room_mgr.h"
 #include "relay_client_mgr.h"
 #include "relay_context.h"
+#include "relay_proto_maker.h"
 #include "message/relay_message.pb.h"
 #include "tc_common_new/time_ext.h"
 
@@ -86,25 +87,30 @@ namespace tc
     void RelaySession::ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto client_id = msg->client_id();
         auto sub = msg->heartbeat();
-        auto wk_peer = client_mgr_->FindClient(client_id);
-        auto peer = wk_peer.lock();
-        if (!peer) {
-            LOGE("Can't find peer for: {}", client_id);
+        auto client = client_mgr_->FindClient(client_id).lock();
+        if (!client) {
+            LOGE("Can't find my client for: {}", client_id);
+            // my state is illegal
+            auto resp_msg
+                = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeClientNotFound, msg->type());
+            this->PostBinMessage(resp_msg);
             return;
         }
-        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+        client->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
     }
 
     void RelaySession::ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto client_id = msg->client_id();
         auto sub = msg->heartbeat();
-        auto wk_peer = client_mgr_->FindClient(client_id);
-        auto peer = wk_peer.lock();
-        if (!peer) {
-            LOGE("Can't find peer for: {}", client_id);
+        auto client = client_mgr_->FindClient(client_id).lock();
+        if (!client) {
+            LOGE("Can't find my client for: {}", client_id);
+            auto resp_msg
+                    = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeClientNotFound, msg->type());
+            this->PostBinMessage(resp_msg);
             return;
         }
-        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+        client->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
     }
 
     void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg) {
@@ -136,17 +142,49 @@ namespace tc
         auto opt_room = room_mgr_->CreateRoom(client_id, remote_client_id);
         if (opt_room.has_value()) {
             const auto& room = opt_room.value();
+            auto resp_msg
+                = RelayProtoMaker::MakeCreateRoomResp(client_id, remote_client_id, room->room_id_, room->GetClients());
+            this->PostBinMessage(resp_msg);
         }
         else {
-
+            auto resp_msg
+                = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeCreateRoomFailed, msg->type());
+            this->PostBinMessage(resp_msg);
         }
     }
 
     void RelaySession::ProcessRequestControlMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
+        // request id
+        auto client_id = msg->client_id();
+        auto sub = msg->request_control();
+        const auto& remote_client_id = sub.remote_client_id();
+        // find remote client
+        auto remote_client = client_mgr_->FindClient(remote_client_id).lock();
+        if (!remote_client || !remote_client->IsAlive()) {
+            LOGE("Can't find client for remote: {}", remote_client_id);
+            auto resp_msg
+                = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeRemoteClientNotFound, msg->type());
+            this->PostBinMessage(resp_msg);
+            return;
+        }
 
+        std::string cpy_data(data.data(), data.size());
+        remote_client->Notify(cpy_data);
     }
 
     void RelaySession::ProcessRequestControlRespMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
-
+        // client response
+        auto sub = msg->request_control_resp();
+        const auto& requester_id = sub.client_id();
+        auto requester_client = client_mgr_->FindClient(requester_id).lock();
+        if (!requester_client || !requester_client->IsAlive()) {
+            LOGE("Can't find client for requester: {}", requester_id);
+            auto resp_msg
+                    = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeRemoteClientNotFound, msg->type());
+            this->PostBinMessage(resp_msg);
+            return;
+        }
+        std::string cpy_data(data.data(), data.size());
+        requester_client->Notify(cpy_data);
     }
 }

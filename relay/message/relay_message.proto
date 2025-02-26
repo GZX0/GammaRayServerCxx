@@ -3,7 +3,8 @@ syntax = "proto3";
 package tc;
 
 enum RelayMessageType {
-  kRelayHello = 0;
+  kRelayError = 0;
+  kRelayHello = 5;
   kRelayHeartBeat = 10;
   kRelayTargetMessage = 20;
   kRelayCreateRoom = 30;
@@ -12,11 +13,19 @@ enum RelayMessageType {
   kRelayRequestControlResp = 60;
 }
 
-enum RelayCode {
+enum RelayErrorCode {
   kRelayCodeUnknown = 0;
   kRelayCodeOk = 200;
   kRelayCodeCreateRoomFailed = 600;
-  kRelayCodeRejectControl = 700;
+  kRelayCodeRejectControl = 601;
+  kRelayCodeClientNotFound = 602;
+  kRelayCodeRemoteClientNotFound = 603;
+}
+
+message RelayErrorMessage {
+  RelayErrorCode code = 1;
+  string message = 2;
+  RelayMessageType which_message = 3;
 }
 
 message RelayClientInfo {
@@ -43,7 +52,7 @@ message RelayCreateRoomMessage {
 }
 
 message RelayCreateRoomRespMessage {
-  RelayCode code = 1;
+  string client_id = 1;
   string remote_client_id = 10;
   string room_id = 20;
   repeated RelayClientInfo clients = 30;
@@ -59,13 +68,13 @@ message RelayRequestControlRespMessage {
   string client_id = 10;
   string remote_client_id = 20;
   string room_id = 30;
-  RelayCode code = 40;
-  string message = 50;
+  string message = 40;
 }
 
 message RelayMessage {
   string client_id = 10;
   string device_id = 20;
+  RelayErrorMessage relay_error = 21;
   RelayMessageType type = 30;
   RelayHello hello = 40;
   RelayHeartBeat heartbeat = 50;

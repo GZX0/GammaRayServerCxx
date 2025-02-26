@@ -11,21 +11,21 @@ namespace tc
     // -->  client 2
     //      client 3
     void RelayRoom::NotifyAll(const std::string& msg) {
-        peers_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayClient>& peer) {
-            auto target_peer = peer.lock();
-            if (target_peer) {
-                target_peer->Notify(msg);
+        clients_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayClient>& client) {
+            auto target_client = client.lock();
+            if (target_client) {
+                target_client->Notify(msg);
             }
         });
     }
 
     // --> client[client id]
     void RelayRoom::NotifyTarget(const std::string& client_id, const std::string& msg) {
-        peers_.ApplyAllCond([&](const std::string& id, const std::weak_ptr<RelayClient>& peer) {
+        clients_.ApplyAllCond([&](const std::string& id, const std::weak_ptr<RelayClient>& client) {
             if (id == client_id) {
-                auto target_peer = peer.lock();
-                if (target_peer) {
-                    target_peer->Notify(msg);
+                auto target_client = client.lock();
+                if (target_client) {
+                    target_client->Notify(msg);
                 }
                 return true;
             }
@@ -37,15 +37,23 @@ namespace tc
     // -->  client 2
     //      client 3
     void RelayRoom::NotifyExcept(const std::string& client_id, const std::string& msg) {
-        peers_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayClient>& peer) {
+        clients_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayClient>& client) {
             if (id == client_id) {
                 return;
             }
-            auto target_peer = peer.lock();
-            if (target_peer) {
-                target_peer->Notify(msg);
+            auto target_client = client.lock();
+            if (target_client) {
+                target_client->Notify(msg);
             }
         });
+    }
+
+    std::vector<std::weak_ptr<RelayClient>> RelayRoom::GetClients() {
+        std::vector<std::weak_ptr<RelayClient>> clients;
+        clients_.ApplyAll([&](const auto& k, const auto& client) {
+            clients.push_back(client);
+        });
+        return clients;
     }
 
 }

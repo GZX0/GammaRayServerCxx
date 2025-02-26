@@ -15,6 +15,7 @@ set(SRCS
         relay_server.cpp
         relay_session.cpp
         relay_context.cpp
+        relay_proto_maker.cpp
 )
 add_executable(${PROJECT_NAME} ${SRCS})
 target_link_libraries(${PROJECT_NAME} tc_common_new relay_message)

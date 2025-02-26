@@ -40,8 +40,8 @@ namespace tc
         room->client_id_ = client_id;
         room->remote_client_id_ = remote_client_id;
         room->context_ = context_;
-        room->peers_.Insert(client_id, client);
-        room->peers_.Insert(remote_client_id, remote_client);
+        room->clients_.Insert(client_id, client);
+        room->clients_.Insert(remote_client_id, remote_client);
         rooms_.Insert(room->room_id_, room);
         return room;
     }
@@ -66,8 +66,8 @@ namespace tc
             return std::nullopt;
         }
         auto room = rooms_.Get(room_id);
-        if (room->peers_.HasKey(peer_id)) {
-            auto target_peer = room->peers_.Get(peer_id);
+        if (room->clients_.HasKey(peer_id)) {
+            auto target_peer = room->clients_.Get(peer_id);
             return target_peer;
         }
         return std::nullopt;
