@@ -13,7 +13,8 @@
 namespace tc
 {
 
-    class MgrClient;
+    class MgrUser;
+    class MgrDevice;
     class MgrContext;
 
     class MgrDatabase {
@@ -23,6 +24,13 @@ namespace tc
         std::string GenerateNewClientId(const std::string& req_info);
         auto GetStorageTypeValue();
         auto InitAppDatabase(const std::string& name);
+
+        std::unique_ptr<MgrUser> FindUserByUid(const std::string& uid);
+
+        void InsertDevice(std::unique_ptr<MgrDevice>&& device);
+        std::unique_ptr<MgrDevice> FindDeviceByDeviceId(const std::string& device_id);
+        std::unique_ptr<MgrDevice> FindDeviceByDeviceIdAndGeneratedSeed(const std::string& device_id, const std::string& seed);
+        std::string GenerateRandomPassword();
 
     private:
         std::shared_ptr<MgrContext> context_ = nullptr;

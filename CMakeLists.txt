@@ -36,3 +36,8 @@ add_subdirectory(relay)
 
 add_custom_target(tc_build_all ALL COMMENT "Build all targets")
 add_dependencies(tc_build_all GammaRayManageServer GammaRayRelayServer)
+
+add_custom_command(TARGET tc_build_all POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/relay/settings/GammaRayRelayServer.toml"  "${CMAKE_BINARY_DIR}/relay"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/manager/settings/GammaRayManageServer.toml"  "${CMAKE_BINARY_DIR}/manager"
+)

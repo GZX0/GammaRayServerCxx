@@ -10,6 +10,8 @@
 using namespace tc;
 
 int main(int argc, char** argv) {
+    auto log_file_path = std::format("GammaRayManagerServer.log");
+    Logger::InitLog(log_file_path, false);
 
     auto msg_looper = std::make_shared<MessageLooper>(-1);
 

@@ -22,6 +22,7 @@ namespace tc
             auto params = GetQueryParams(req.query());
             auto opt_hw_info = GetParam(params, "hw_info");
             if (!opt_hw_info.has_value()) {
+                LOGE("hw info is empty!");
                 return;
             }
 

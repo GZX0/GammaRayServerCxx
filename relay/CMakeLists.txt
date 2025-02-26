@@ -4,6 +4,7 @@ project(GammaRayRelayServer)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(message)
+add_subdirectory(settings)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(SRCS
@@ -16,6 +17,8 @@ set(SRCS
         relay_session.cpp
         relay_context.cpp
         relay_proto_maker.cpp
+
+        ${SETTINGS_SRCS}
 )
 add_executable(${PROJECT_NAME} ${SRCS})
 target_link_libraries(${PROJECT_NAME} tc_common_new relay_message)
