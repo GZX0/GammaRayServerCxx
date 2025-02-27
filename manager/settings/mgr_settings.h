@@ -7,10 +7,10 @@
 
 namespace tc
 {
-    class RelaySettings {
+    class MgrSettings {
     public:
-        static RelaySettings* Instance() {
-            static RelaySettings instance;
+        static MgrSettings* Instance() {
+            static MgrSettings instance;
             return &instance;
         }
 

@@ -9,8 +9,8 @@
 namespace tc
 {
 
-    void RelaySettings::LoadSettings() {
-        auto settings_name = "GammaRayRelayServer.toml";
+    void MgrSettings::LoadSettings() {
+        auto settings_name = "GammaRayManageServer.toml";
         toml::parse_result result;
         try {
             result = toml::parse_file(settings_name);
@@ -18,10 +18,10 @@ namespace tc
             LOGE("Parse file failed: {}", e.what());
             return;
         }
-        listen_port_ = result["listen-port"].value_or(20481);
+        listen_port_ = result["listen-port"].value_or(20581);
     }
 
-    void RelaySettings::DumpSettings() {
+    void MgrSettings::DumpSettings() {
         LOGI("---------------------Settings Beg-----------------------");
         LOGI("Listen port: {}", listen_port_);
         LOGI("---------------------Settings End-----------------------");

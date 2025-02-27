@@ -7,11 +7,34 @@
 
 #include <string>
 
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/json.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/uri.hpp>
+using bsoncxx::builder::basic::kvp;
+using bsoncxx::builder::basic::make_document;
+
 namespace tc
 {
+    const std::string kMgrDeviceBid = "bid";
+    const std::string kMgrDeviceId = "device_id";
+    const std::string kMgrDeviceBelongToUser = "belong_to_user";
+    const std::string kMgrDeviceSeed = "seed";
+    const std::string kMgrDeviceRandomPwd = "random_pwd";
+    const std::string kMgrDeviceSafetyPwd = "safety_pwd";
+    const std::string kMgrDeviceDeleted = "deleted";
+    const std::string kMgrDeviceCreatedTimestamp = "created_timestamp";
+    const std::string kMgrDeviceUpdatedTimestamp = "updated_timestamp";
+    const std::string kMgrUsedTime = "used_time";
+
     class MgrDevice {
     public:
-        int id_{};
+        bsoncxx::document::value AsBsonDocument();
+        bool ParseFrom(const bsoncxx::document::value& val);
+
+    public:
+        std::string obj_id_{};
         // 9 numbers
         std::string device_id_;
         // user id
@@ -25,8 +48,12 @@ namespace tc
         // 0 -> alive
         // 1 -> deleted
         int deleted_{0};
-
+        // created
         int64_t created_timestamp_{0};
+        // updated.
+        int64_t updated_timestamp_{0};
+        // used time ; unit: ms
+        int64_t used_time_{0};
     };
 
 }

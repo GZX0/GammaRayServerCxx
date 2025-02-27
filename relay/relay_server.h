@@ -13,6 +13,7 @@ namespace tc
 
     class RelayContext;
     class MessageListener;
+    class BaseHandler;
 
     class RelayServer : public WsServer {
     public:
@@ -21,14 +22,17 @@ namespace tc
         void Init();
         void Start();
         void Exit() override;
+        std::shared_ptr<RelayContext> GetContext();
 
     private:
         void InitMessageListener();
+        void InitHandlers();
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         bool exit_ = false;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;
+        std::unordered_map<std::string, std::shared_ptr<BaseHandler>> handlers_;
     };
 
 }

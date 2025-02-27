@@ -5,6 +5,7 @@
 #include "client_handler.h"
 #include "manager/mgr_server.h"
 #include "manager/mgr_context.h"
+#include "manager/database/mgr_device.h"
 #include "manager/database/mgr_database.h"
 
 namespace tc
@@ -26,9 +27,13 @@ namespace tc
                 return;
             }
 
+            LOGI("New client in thread: {}", GetCurrentThreadId());
             auto hw_info = opt_hw_info.value();
-            auto client_id = database_->GenerateNewClientId(hw_info);
-            this->SendOkJson(resp, client_id);
+            auto device = database_->GenerateNewDevice(hw_info);
+            json obj;
+            obj["device_id"] = device->device_id_;
+            obj["random_pwd"] = device->random_pwd_;
+            this->SendOkJson(resp, obj.dump());
         });
     }
 

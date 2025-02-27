@@ -19,6 +19,9 @@ namespace tc
 
     std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& client_id, const std::string& remote_client_id) {
         auto pm = context_->GetClientManager();
+        if (!pm) {
+            return std::nullopt;
+        }
         // check myself
         auto wk_client = pm->FindClient(client_id);
         auto client = wk_client.lock();
@@ -76,6 +79,24 @@ namespace tc
             return client;
         }
         return std::nullopt;
+    }
+
+    uint32_t RelayRoomManager::GetRoomCount() {
+        return rooms_.Size();
+    }
+
+    std::vector<std::weak_ptr<RelayRoom>> RelayRoomManager::FindRooms(int page, int page_size) {
+        int begin = std::max(0, page - 1) * page_size;
+        int end = begin + page_size;
+        auto opt_rooms = rooms_.QueryRange(begin, end);
+        std::vector<std::weak_ptr<RelayRoom>> target_rooms;
+        if (opt_rooms.has_value()) {
+            auto rooms = opt_rooms.value();
+            for (const auto& r : rooms) {
+                target_rooms.push_back(r);
+            }
+        }
+        return target_rooms;
     }
 
 }

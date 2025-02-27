@@ -7,6 +7,7 @@
 #include "relay_context.h"
 #include "relay_session.h"
 #include "relay_messages.h"
+#include "handler/client_handler.h"
 
 namespace tc
 {
@@ -29,13 +30,20 @@ namespace tc
         // 2. add relay path
         WsServer::AddWebsocketRouter<RelaySession>("/relay");
 
-        // 3. start it
+        // 3. init handlers
+        InitHandlers();
+
+        // finally. start it
         WsServer::Start("0.0.0.0", 20481);
     }
 
     void RelayServer::Exit() {
         WsServer::Exit();
         exit_ = true;
+    }
+
+    std::shared_ptr<RelayContext> RelayServer::GetContext() {
+        return context_;
     }
 
     void RelayServer::InitMessageListener() {
@@ -46,6 +54,15 @@ namespace tc
         msg_listener_->Listen<RlMsgTimer5S>([=, this](const RlMsgTimer5S& msg) {
 
         });
+    }
+
+    void RelayServer::InitHandlers() {
+        auto sh_this = std::dynamic_pointer_cast<RelayServer>(shared_from_this());
+        handlers_.insert({ "client", std::make_shared<ClientHandler>(sh_this) });
+
+        for (const auto& [k, handler] : handlers_) {
+            handler->RegisterPaths();
+        }
     }
 
 }

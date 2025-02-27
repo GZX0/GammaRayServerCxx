@@ -15,6 +15,7 @@ namespace tc
     class MgrContext;
     class MessageListener;
     class BaseHandler;
+    class MgrSettings;
 
     class MgrServer : public WsServer {
     public:
@@ -30,6 +31,7 @@ namespace tc
         void InitHandlers();
 
     private:
+        MgrSettings* settings_ = nullptr;
         std::shared_ptr<MgrContext> context_ = nullptr;
         bool exit_ = false;
         std::shared_ptr<MessageListener> msg_listener_ = nullptr;

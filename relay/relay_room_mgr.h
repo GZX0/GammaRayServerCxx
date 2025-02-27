@@ -33,6 +33,10 @@ namespace tc
         // not found: std::nullopt
         std::optional<std::weak_ptr<RelayClient>> RemoveClientInRoom(const std::string& room_id, const std::string& client_id);
 
+        uint32_t GetRoomCount();
+
+        std::vector<std::weak_ptr<RelayRoom>> FindRooms(int page, int page_size);
+
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         ConcurrentHashMap<std::string, std::shared_ptr<RelayRoom>> rooms_;

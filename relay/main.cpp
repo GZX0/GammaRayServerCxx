@@ -5,6 +5,10 @@
 #include "relay_context.h"
 #include "tc_common_new/log.h"
 #include "relay_server.h"
+#include "relay_room.h"
+#include "relay_client.h"
+#include "relay_room_mgr.h"
+#include "relay_client_mgr.h"
 #include "tc_common_new/message_looper.h"
 #include "settings/relay_settings.h"
 
@@ -13,7 +17,7 @@ using namespace tc;
 int main(int argc, char** argv) {
 
     auto log_file_path = std::format("GammaRayRelayServer.log");
-    Logger::InitLog(log_file_path, true);
+    Logger::InitLog(log_file_path, false);
 
     auto settings = RelaySettings::Instance();
     settings->LoadSettings();

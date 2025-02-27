@@ -14,8 +14,6 @@
 #include <random>
 #include <ctime>
 
-using namespace sqlite_orm;
-
 namespace tc
 {
 
@@ -23,46 +21,23 @@ namespace tc
         context_ = ctx;
     }
 
-    auto MgrDatabase::InitAppDatabase(const std::string& name) {
-        auto st = make_storage(name,
-            make_table("user",
-                make_column("id", &MgrUser::id_, primary_key().autoincrement()),
-                make_column("uid", &MgrUser::uid_),
-                make_column("client_id", &MgrUser::uid_),
-                make_column("created_timestamp", &MgrUser::created_timestamp_),
-                make_column("deleted", &MgrUser::deleted_),
-                make_column("bind_qq", &MgrUser::bind_qq_),
-                make_column("bind_wechat", &MgrUser::bind_wechat_),
-                make_column("bind_phone", &MgrUser::bind_phone_),
-                make_column("vip_type", &MgrUser::vip_type_)
-            ),
-            make_table("device",
-                make_column("id", &MgrDevice::id_),
-                make_column("device_id", &MgrDevice::device_id_),
-                make_column("belong_to_user", &MgrDevice::belong_to_user_),
-                make_column("seed", &MgrDevice::seed_),
-                make_column("random_pwd", &MgrDevice::random_pwd_),
-                make_column("safety_pwd", &MgrDevice::safety_pwd_),
-                make_column("deleted", &MgrDevice::deleted_),
-                make_column("created_timestamp", &MgrDevice::created_timestamp_)
-           )
-        );
-        st.sync_schema();
-        return st;
+    bool MgrDatabase::Init(const std::string& url, const std::string& db_name) {
+        try {
+            mgo_instance_ = std::make_shared<mongocxx::instance>();
+            mongocxx::uri uri(url);
+            mgo_client_ = std::make_shared<mongocxx::client>(uri);
+            mgo_db_ = mgo_client_->database(db_name);
+            c_device_ = mgo_db_.collection("gr_device");
+            c_user_ = mgo_db_.collection("gr_user");
+        } catch(std::exception& e) {
+            LOGE("mongodb init failed: {} {}", url, db_name);
+            return false;
+        }
+        return true;
     }
 
-    auto MgrDatabase::GetStorageTypeValue() {
-        return InitAppDatabase("");
-    }
-
-    void MgrDatabase::Init() {
-        auto storage = InitAppDatabase("manager.db");
-        db_storage_ = storage;
-        storage.sync_schema();
-    }
-
-    std::string MgrDatabase::GenerateNewClientId(const std::string& req_info) {
-        std::string final_id;
+    std::shared_ptr<MgrDevice> MgrDatabase::GenerateNewDevice(const std::string& req_info) {
+        std::shared_ptr<MgrDevice> the_device = nullptr;
         bool ignore_req_info = false;
         while (true) {
             std::string seed;
@@ -84,16 +59,23 @@ namespace tc
                 << md5_str[26] % 10
                 << md5_str[28] % 10
                 << md5_str[30] % 10;
-            final_id = ss.str();
-            // todo: check database
-            // exist ? don't use req info anymore.
-            // ignore_req_info = true;
-            auto device = FindDeviceByDeviceIdAndGeneratedSeed(final_id, seed);
+            auto new_client_id = ss.str();
+            auto device = FindDeviceByDeviceIdAndGeneratedSeed(new_client_id, seed);
             if (device) {
-                LOGI("Yes, found device : {}", device->device_id_);
+                auto new_random_pwd = GenerateRandomPassword();
+                // update new random password
+                LOGI("Before update device.");
+                device->random_pwd_ = MD5::Hex(new_random_pwd);
+                this->UpdateDevice(device->device_id_, {
+                    {kMgrDeviceRandomPwd, device->random_pwd_}
+                });
+                LOGI("After update device.");
+                // recover to clear pwd, then -> client
+                the_device = std::move(device);
+                the_device->random_pwd_ = new_random_pwd;
             }
             else {
-                device= FindDeviceByDeviceId(final_id);
+                device= FindDeviceByDeviceId(new_client_id);
                 if (device) {
                     ignore_req_info = true;
                     LOGW("We found the same final id, but the seed is not equal, regenerate one.");
@@ -101,54 +83,81 @@ namespace tc
                 }
                 else {
                     // insert device
-                    auto new_device = std::make_unique<MgrDevice>();
-                    new_device->device_id_ = final_id;
+                    auto new_random_pwd = GenerateRandomPassword();
+                    auto new_device = std::make_shared<MgrDevice>();
+                    new_device->device_id_ = new_client_id;
                     new_device->seed_ = seed;
-                    new_device->random_pwd_ = GenerateRandomPassword();
+                    new_device->random_pwd_ = MD5::Hex(new_random_pwd);
                     new_device->deleted_ = 0;
                     new_device->created_timestamp_ = (int64_t) TimeExt::GetCurrentTimestamp();
-                    InsertDevice(std::move(new_device));
-                    LOGI("Generate a new device id: {}, seed: {}", new_device->device_id_, seed);
+                    new_device->updated_timestamp_ = (int64_t) TimeExt::GetCurrentTimestamp();
+                    InsertDevice(new_device);
+
+                    new_device->random_pwd_ = new_random_pwd;
+                    the_device = new_device;
+                    LOGI("Generate a new device id: {}, seed: {}", the_device->device_id_, seed);
                 }
             }
             break;
         }
-        return final_id;
+        return the_device;
     }
 
-    std::unique_ptr<MgrUser> MgrDatabase::FindUserByUid(const std::string& uid) {
+    std::shared_ptr<MgrUser> MgrDatabase::FindUserByUid(const std::string& uid) {
         return nullptr;
     }
 
-    void MgrDatabase::InsertDevice(std::unique_ptr<MgrDevice>&& device) {
-        using Storage = decltype(GetStorageTypeValue());
-        auto storage = std::any_cast<Storage>(db_storage_);
-        storage.insert(*device);
-    }
-
-    std::unique_ptr<MgrDevice> MgrDatabase::FindDeviceByDeviceId(const std::string& device_id) {
-        using Storage = decltype(GetStorageTypeValue());
-        auto storage = std::any_cast<Storage>(db_storage_);
-        auto devices = storage.get_all_pointer<MgrDevice>(where(c(&MgrDevice::device_id_) == device_id));
-        if (!devices.empty()) {
-            auto device = std::move(devices[0]);
-            devices.erase(devices.begin());
-            return device;
+    bool MgrDatabase::InsertDevice(const std::shared_ptr<MgrDevice>& device) {
+        auto doc = device->AsBsonDocument();
+        try {
+            c_device_.insert_one(doc.view());
+            return true;
+        } catch(std::exception& e) {
+            LOGE("Insert failed:{}", e.what());
+            return false;
         }
-        return nullptr;
     }
 
-    std::unique_ptr<MgrDevice> MgrDatabase::FindDeviceByDeviceIdAndGeneratedSeed(const std::string& device_id, const std::string& seed) {
-        using Storage = decltype(GetStorageTypeValue());
-        auto storage = std::any_cast<Storage>(db_storage_);
-        auto devices = storage.get_all_pointer<MgrDevice>(
-                where(c(&MgrDevice::device_id_) == device_id and c(&MgrDevice::seed_) == seed));
-        if (!devices.empty()) {
-            auto device = std::move(devices[0]);
-            devices.erase(devices.begin());
-            return device;
+    bool MgrDatabase::UpdateDevice(const std::string& device_id, const std::map<std::string, std::string>& info) {
+        auto update_doc = bsoncxx::builder::basic::document{};
+        for (const auto& [k, v] : info) {
+            update_doc.append(kvp(k, v));
         }
-        return nullptr;
+        update_doc.append(kvp(kMgrDeviceUpdatedTimestamp, (int64_t)(TimeExt::GetCurrentTimestamp())));
+
+        auto r = c_device_.update_one(
+            make_document(kvp(kMgrDeviceId, device_id)),
+            make_document(kvp("$set", update_doc.view()))
+        );
+
+        return r.has_value();
+    }
+
+    std::shared_ptr<MgrDevice> MgrDatabase::FindDeviceByDeviceId(const std::string& device_id) {
+        auto result = c_device_.find_one(make_document(
+            kvp(kMgrDeviceId, device_id)
+        ));
+        if (!result.has_value()) {
+            return nullptr;
+        }
+        auto val = result.value();
+        auto device = std::make_shared<MgrDevice>();
+        device->ParseFrom(val);
+        return device;
+    }
+
+    std::shared_ptr<MgrDevice> MgrDatabase::FindDeviceByDeviceIdAndGeneratedSeed(const std::string& device_id, const std::string& seed) {
+        auto result = c_device_.find_one(make_document(
+            kvp(kMgrDeviceId, device_id),
+            kvp(kMgrDeviceSeed, seed)
+        ));
+        if (!result.has_value()) {
+            return nullptr;
+        }
+        auto val = result.value();
+        auto device = std::make_shared<MgrDevice>();
+        device->ParseFrom(val);
+        return device;
     }
 
     std::string MgrDatabase::GenerateRandomPassword() {

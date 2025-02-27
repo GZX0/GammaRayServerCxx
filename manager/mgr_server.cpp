@@ -8,12 +8,14 @@
 #include "mgr_messages.h"
 #include "tc_common_new/log.h"
 #include "handler/client_handler.h"
+#include "settings/mgr_settings.h"
 
 namespace tc
 {
 
     MgrServer::MgrServer(const std::shared_ptr<MgrContext>& ctx) : WsServer() {
         context_ = ctx;
+        settings_ = MgrSettings::Instance();
     }
 
     void MgrServer::Init() {
@@ -34,7 +36,8 @@ namespace tc
         InitHandlers();
 
         // finally, start it
-        WsServer::Start("0.0.0.0", 20581);
+        WsServer::Start("0.0.0.0", settings_->listen_port_);
+        LOGI("Start listening at: {}", settings_->listen_port_);
     }
 
     void MgrServer::Exit() {

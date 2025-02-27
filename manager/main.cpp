@@ -4,6 +4,7 @@
 
 #include "mgr_context.h"
 #include "mgr_server.h"
+#include "settings/mgr_settings.h"
 #include "tc_common_new/log.h"
 #include "tc_common_new/message_looper.h"
 
@@ -12,6 +13,10 @@ using namespace tc;
 int main(int argc, char** argv) {
     auto log_file_path = std::format("GammaRayManagerServer.log");
     Logger::InitLog(log_file_path, false);
+
+    auto settings = MgrSettings::Instance();
+    settings->LoadSettings();
+    settings->DumpSettings();
 
     auto msg_looper = std::make_shared<MessageLooper>(-1);
 

@@ -20,7 +20,7 @@ namespace tc
         auto sh_this = shared_from_this();
         msg_notifier_ = std::make_shared<MessageNotifier>();
         mgr_database_ = std::make_shared<MgrDatabase>(sh_this);
-        mgr_database_->Init();
+        mgr_database_->Init("mongodb://localhost:27017/", "gr_manager");
         StartTimers();
         return true;
     }
