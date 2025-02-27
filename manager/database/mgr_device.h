@@ -27,6 +27,7 @@ namespace tc
     const std::string kMgrDeviceCreatedTimestamp = "created_timestamp";
     const std::string kMgrDeviceUpdatedTimestamp = "updated_timestamp";
     const std::string kMgrUsedTime = "used_time";
+    const std::string kMgrPlatform = "platform";
 
     class MgrDevice {
     public:
@@ -54,6 +55,8 @@ namespace tc
         int64_t updated_timestamp_{0};
         // used time ; unit: ms
         int64_t used_time_{0};
+        // platform
+        std::string platform_;
     };
 
 }

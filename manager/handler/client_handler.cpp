@@ -18,7 +18,7 @@ namespace tc
     }
 
     void ClientHandler::RegisterPaths() {
-        server_->AddHttpGetRouter("/request/new/client/id",
+        server_->AddHttpGetRouter("/request/new/device",
             [=, this](const auto& path, http::web_request& req, http::web_response& resp) {
             auto params = GetQueryParams(req.query());
             auto opt_hw_info = GetParam(params, "hw_info");
@@ -27,9 +27,15 @@ namespace tc
                 return;
             }
 
+            auto opt_platform = GetParam(params, "platform");
+            std::string platform;
+            if (opt_platform.has_value()) {
+                platform = opt_platform.value();
+            }
+
             LOGI("New client in thread: {}", GetCurrentThreadId());
             auto hw_info = opt_hw_info.value();
-            auto device = database_->GenerateNewDevice(hw_info);
+            auto device = database_->GenerateNewDevice(hw_info, platform);
             json obj;
             obj["device_id"] = device->device_id_;
             obj["random_pwd"] = device->random_pwd_;

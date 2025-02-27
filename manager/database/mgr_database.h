@@ -32,7 +32,7 @@ namespace tc
 
         std::shared_ptr<MgrUser> FindUserByUid(const std::string& uid);
 
-        std::shared_ptr<MgrDevice> GenerateNewDevice(const std::string& req_info);
+        std::shared_ptr<MgrDevice> GenerateNewDevice(const std::string& req_info, const std::string& platform);
         bool InsertDevice(const std::shared_ptr<MgrDevice>& device);
         bool UpdateDevice(const std::string& device_id, const std::map<std::string, std::string>& info);
         std::shared_ptr<MgrDevice> FindDeviceByDeviceId(const std::string& device_id);

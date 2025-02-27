@@ -17,7 +17,8 @@ namespace tc
             kvp(kMgrDeviceDeleted, deleted_),
             kvp(kMgrDeviceCreatedTimestamp, created_timestamp_),
             kvp(kMgrDeviceUpdatedTimestamp, updated_timestamp_),
-            kvp(kMgrUsedTime, used_time_)
+            kvp(kMgrUsedTime, used_time_),
+            kvp(kMgrPlatform, platform_)
         );
     }
 
@@ -34,6 +35,7 @@ namespace tc
             this->created_timestamp_ = bson[kMgrDeviceCreatedTimestamp].get_int64();
             this->updated_timestamp_ = bson[kMgrDeviceUpdatedTimestamp].get_int64();
             this->used_time_ = bson[kMgrUsedTime].get_int64();
+            this->platform_ = std::string{bson[kMgrPlatform].get_string().value};
             return true;
         }
         catch(std::exception& e) {

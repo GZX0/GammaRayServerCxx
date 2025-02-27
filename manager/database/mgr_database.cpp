@@ -36,7 +36,7 @@ namespace tc
         return true;
     }
 
-    std::shared_ptr<MgrDevice> MgrDatabase::GenerateNewDevice(const std::string& req_info) {
+    std::shared_ptr<MgrDevice> MgrDatabase::GenerateNewDevice(const std::string& req_info, const std::string& platform) {
         std::shared_ptr<MgrDevice> the_device = nullptr;
         bool ignore_req_info = false;
         while (true) {
@@ -91,6 +91,7 @@ namespace tc
                     new_device->deleted_ = 0;
                     new_device->created_timestamp_ = (int64_t) TimeExt::GetCurrentTimestamp();
                     new_device->updated_timestamp_ = (int64_t) TimeExt::GetCurrentTimestamp();
+                    new_device->platform_ = platform;
                     InsertDevice(new_device);
 
                     new_device->random_pwd_ = new_random_pwd;
