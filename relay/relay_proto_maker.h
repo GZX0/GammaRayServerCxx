@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include "message/relay_message.pb.h"
+#include "relay_message.pb.h"
 
 namespace tc
 {

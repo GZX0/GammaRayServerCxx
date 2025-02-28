@@ -6,7 +6,7 @@
 #define GAMMARAYSERVER_RELAY_SESSION_H
 
 #include "tc_common_new/ws_server.h"
-#include "message/relay_message.pb.h"
+#include "relay_message.pb.h"
 
 namespace tc
 {

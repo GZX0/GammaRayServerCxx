@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(bsoncxx CONFIG REQUIRED)
 find_package(mongocxx CONFIG REQUIRED)
 
-add_subdirectory(message)
 add_subdirectory(settings)
 add_subdirectory(handler)
 add_subdirectory(database)
@@ -23,6 +22,6 @@ set(SRCS
 )
 
 add_executable(${PROJECT_NAME} ${SRCS})
-target_link_libraries(${PROJECT_NAME} tc_common_new mgr_message)
+target_link_libraries(${PROJECT_NAME} tc_common_new tc_mgr_message)
 target_link_libraries(${PROJECT_NAME} $<IF:$<TARGET_EXISTS:mongo::bsoncxx_static>,mongo::bsoncxx_static,mongo::bsoncxx_shared>)
 target_link_libraries(${PROJECT_NAME} $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>)

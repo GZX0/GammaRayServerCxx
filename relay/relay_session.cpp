@@ -9,7 +9,7 @@
 #include "relay_device_mgr.h"
 #include "relay_context.h"
 #include "relay_proto_maker.h"
-#include "message/relay_message.pb.h"
+#include "relay_message.pb.h"
 #include "tc_common_new/time_ext.h"
 
 namespace tc
