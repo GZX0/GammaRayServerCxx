@@ -4,7 +4,7 @@
 
 #include "relay_context.h"
 #include "relay_room_mgr.h"
-#include "relay_client_mgr.h"
+#include "relay_device_mgr.h"
 #include "relay_messages.h"
 #include "tc_common_new/message_notifier.h"
 #include "tc_common_new/message_looper.h"
@@ -20,12 +20,12 @@ namespace tc
         auto sh_this = shared_from_this();
         msg_notifier_ = std::make_shared<MessageNotifier>();
         room_mgr_ = std::make_shared<RelayRoomManager>(sh_this);
-        client_mgr_ = std::make_shared<RelayClientManager>(sh_this);
+        client_mgr_ = std::make_shared<RelayDeviceManager>(sh_this);
         StartTimers();
         return true;
     }
 
-    std::shared_ptr<RelayClientManager> RelayContext::GetClientManager() {
+    std::shared_ptr<RelayDeviceManager> RelayContext::GetClientManager() {
         return client_mgr_;
     }
 

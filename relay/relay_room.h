@@ -12,7 +12,7 @@
 namespace tc
 {
 
-    class RelayClient;
+    class RelayDevice;
     class RelayContext;
 
     class RelayRoom {
@@ -23,21 +23,21 @@ namespace tc
         void NotifyAll(const std::string& msg);
 
         // --> client[client id]
-        void NotifyTarget(const std::string& client_id, const std::string& msg);
+        void NotifyTarget(const std::string& device_id, const std::string& msg);
 
         //      xxx client 1 [client id]
         // -->  client 2
         //      client 3
-        void NotifyExcept(const std::string& client_id, const std::string& msg);
+        void NotifyExcept(const std::string& device_id, const std::string& msg);
 
-        std::vector<std::weak_ptr<RelayClient>> GetClients();
+        std::vector<std::weak_ptr<RelayDevice>> GetDevices();
 
     public:
-        std::string client_id_;
-        std::string remote_client_id_;
+        std::string device_id_;
+        std::string remote_device_id_;
         std::string room_id_;
 
-        ConcurrentHashMap<std::string, std::weak_ptr<RelayClient>> clients_;
+        ConcurrentHashMap<std::string, std::weak_ptr<RelayDevice>> devices_;
         std::shared_ptr<RelayContext> context_ = nullptr;
     };
 

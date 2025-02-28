@@ -29,7 +29,6 @@ message RelayErrorMessage {
 }
 
 message RelayClientInfo {
-  string client_id = 1;
   string device_id = 2;
 }
 
@@ -43,36 +42,35 @@ message RelayHeartBeat {
 
 message RelayTargetMessage {
   string room_id = 10;
-  string remote_client_id = 20;
+  string remote_device_id = 20;
   string payload = 30;
 }
 
 message RelayCreateRoomMessage {
-  string remote_client_id = 10;
+  string remote_device_id = 10;
 }
 
 message RelayCreateRoomRespMessage {
-  string client_id = 1;
-  string remote_client_id = 10;
+  string device_id = 1;
+  string remote_device_id = 10;
   string room_id = 20;
   repeated RelayClientInfo clients = 30;
 }
 
 message RelayRequestControlMessage {
-  string client_id = 10;
-  string remote_client_id = 20;
+  string device_id = 10;
+  string remote_device_id = 20;
   string room_id = 30;
 }
 
 message RelayRequestControlRespMessage {
-  string client_id = 10;
-  string remote_client_id = 20;
+  string device_id = 10;
+  string remote_device_id = 20;
   string room_id = 30;
   string message = 40;
 }
 
 message RelayMessage {
-  string client_id = 10;
   string device_id = 20;
   RelayErrorMessage relay_error = 21;
   RelayMessageType type = 30;

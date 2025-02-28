@@ -12,7 +12,7 @@ namespace tc
 
     class RelayContext;
     class RelayServer;
-    class RelayClientManager;
+    class RelayDeviceManager;
 
     class ClientHandler : public BaseHandler {
     public:
@@ -23,7 +23,7 @@ namespace tc
     private:
         std::shared_ptr<RelayServer> server_ = nullptr;
         std::shared_ptr<RelayContext> context_ = nullptr;
-        std::shared_ptr<RelayClientManager> client_mgr_ = nullptr;
+        std::shared_ptr<RelayDeviceManager> client_mgr_ = nullptr;
     };
 
 }

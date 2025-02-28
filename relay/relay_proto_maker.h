@@ -12,7 +12,7 @@
 namespace tc
 {
 
-    class RelayClient;
+    class RelayDevice;
 
     class RelayProtoMaker {
     public:
@@ -24,10 +24,10 @@ namespace tc
                                             const std::string& msg,
                                             const RelayMessageType& which_message);
 
-        static std::string MakeCreateRoomResp(const std::string& client_id,
-                                              const std::string& remote_client_id,
+        static std::string MakeCreateRoomResp(const std::string& device_id,
+                                              const std::string& remote_device_id,
                                               const std::string& room_id,
-                                              const std::vector<std::weak_ptr<RelayClient>>& clients);
+                                              const std::vector<std::weak_ptr<RelayDevice>>& clients);
 
     private:
         static std::string GetErrorMessage(const RelayErrorCode& code);

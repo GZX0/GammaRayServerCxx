@@ -6,8 +6,8 @@
 #include "tc_common_new/log.h"
 #include "relay/relay_server.h"
 #include "relay/relay_context.h"
-#include "relay/relay_client_mgr.h"
-#include "relay/relay_client.h"
+#include "relay/relay_device_mgr.h"
+#include "relay/relay_device.h"
 
 namespace tc
 {
@@ -38,12 +38,11 @@ namespace tc
                 int page = std::atoi(opt_page.value().c_str());
                 int page_size = std::atoi(opt_page_size.value().c_str());
 
-                auto clients = client_mgr_->FindClients(page, page_size);
+                auto clients = client_mgr_->FindDevices(page, page_size);
                 json obj_array = json::array();
                 for (const auto& client : clients) {
                     if (auto c = client.lock(); c) {
                         json obj;
-                        obj["client_id"] = c->client_id_;
                         obj["device_id"] = c->device_id_;
                         obj_array.push_back(obj);
                     }

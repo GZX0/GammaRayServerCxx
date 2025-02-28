@@ -11,7 +11,7 @@
 
 namespace tc
 {
-    class RelayClient;
+    class RelayDevice;
     class RelayRoom;
     class RelayContext;
 
@@ -20,7 +20,7 @@ namespace tc
         explicit RelayRoomManager(const std::shared_ptr<RelayContext>& ctx);
         // success: RelayRoom ptr
         // failed: nullptr
-        std::optional<std::shared_ptr<RelayRoom>> CreateRoom(const std::string& client_id, const std::string& remote_client_id);
+        std::optional<std::shared_ptr<RelayRoom>> CreateRoom(const std::string& device_id, const std::string& remote_device_id);
 
         //
         std::optional<std::shared_ptr<RelayRoom>> RemoveRoom(const std::string& room_id);
@@ -31,7 +31,7 @@ namespace tc
 
         // found: Peer weak ptr
         // not found: std::nullopt
-        std::optional<std::weak_ptr<RelayClient>> RemoveClientInRoom(const std::string& room_id, const std::string& client_id);
+        std::optional<std::weak_ptr<RelayDevice>> RemoveClientInRoom(const std::string& room_id, const std::string& device_id);
 
         uint32_t GetRoomCount();
 

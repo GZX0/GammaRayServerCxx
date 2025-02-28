@@ -4,9 +4,9 @@
 
 #include "relay_session.h"
 #include "relay_room.h"
-#include "relay_client.h"
+#include "relay_device.h"
 #include "relay_room_mgr.h"
-#include "relay_client_mgr.h"
+#include "relay_device_mgr.h"
 #include "relay_context.h"
 #include "relay_proto_maker.h"
 #include "message/relay_message.pb.h"
@@ -23,23 +23,15 @@ namespace tc
         room_mgr_ = context_->GetRoomManager();
         client_mgr_ = context_->GetClientManager();
 
-        auto client_id = GetQueryParam("client_id");
-        if (!client_id.has_value()) {
-            LOGE("Don't have a client id, will not work!");
-            return;
-        }
-
         auto device_id = GetQueryParam("device_id");
         if (!device_id.has_value()) {
             LOGE("Don't have a device id, will not work!");
             return;
         }
 
-        this->client_id_ = client_id.value();
         this->device_id_ = device_id.value();
 
-        auto peer = std::make_shared<RelayClient>();
-        peer->client_id_ = this->client_id_;
+        auto peer = std::make_shared<RelayDevice>();
         peer->device_id_ = this->device_id_;
         peer->socket_fd_ = socket_fd_;
         peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
@@ -54,9 +46,12 @@ namespace tc
     void RelaySession::OnBinMessage(std::string_view data) {
         auto rl_msg = std::make_shared<RelayMessage>();
         try {
-            rl_msg->ParseFromString(data);
+            if (!rl_msg->ParseFromString(std::string{data})) {
+                LOGE("Parse message failed!");
+                return;
+            }
         } catch(std::exception& e) {
-            LOGE("Parse message failed: {}", e.what());
+            LOGE("Parse message failed: {}, msg: {}", e.what(), data);
             return;
         }
         ProcessRelayMessage(std::move(rl_msg), data);
@@ -85,11 +80,11 @@ namespace tc
     }
 
     void RelaySession::ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg) {
-        auto client_id = msg->client_id();
+        auto device_id = msg->device_id();
         auto sub = msg->heartbeat();
-        auto client = client_mgr_->FindClient(client_id).lock();
+        auto client = client_mgr_->FindDevice(device_id).lock();
         if (!client) {
-            LOGE("Can't find my client for: {}", client_id);
+            LOGE("Can't find my device_id for: {}", device_id);
             // my state is illegal
             auto resp_msg
                 = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeClientNotFound, msg->type());
@@ -100,11 +95,11 @@ namespace tc
     }
 
     void RelaySession::ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg) {
-        auto client_id = msg->client_id();
+        auto device_id = msg->device_id();
         auto sub = msg->heartbeat();
-        auto client = client_mgr_->FindClient(client_id).lock();
+        auto client = client_mgr_->FindDevice(device_id).lock();
         if (!client) {
-            LOGE("Can't find my client for: {}", client_id);
+            LOGE("Can't find my device_id for: {}", device_id);
             auto resp_msg
                     = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeClientNotFound, msg->type());
             this->PostBinMessage(resp_msg);
@@ -114,12 +109,12 @@ namespace tc
     }
 
     void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg) {
-        auto client_id = msg->client_id();
+        auto device_id = msg->device_id();
         auto sub = msg->relay();
-        const auto& remote_client_id = sub.remote_client_id();
+        const auto& remote_device_id = sub.remote_device_id();
         auto opt_room = room_mgr_->FindRoom(sub.room_id());
         if (!opt_room.has_value()) {
-            LOGW("Can't find room for id: {}, request client id: {}", sub.room_id(), client_id);
+            LOGW("Can't find room for id: {}, request device id: {}", sub.room_id(), device_id);
             return;
         }
 
@@ -130,20 +125,20 @@ namespace tc
             return;
         }
 
-        room->NotifyTarget(remote_client_id, sub.payload());
+        room->NotifyTarget(remote_device_id, sub.payload());
     }
 
     void RelaySession::ProcessCreateRoomMessage(std::shared_ptr<RelayMessage>&& msg) {
         // requester client id
-        auto client_id = msg->client_id();
+        auto device_id = msg->device_id();
         auto sub = msg->create_room();
-        const auto& remote_client_id = sub.remote_client_id();
+        const auto& remote_device_id = sub.remote_device_id();
 
-        auto opt_room = room_mgr_->CreateRoom(client_id, remote_client_id);
+        auto opt_room = room_mgr_->CreateRoom(device_id, remote_device_id);
         if (opt_room.has_value()) {
             const auto& room = opt_room.value();
             auto resp_msg
-                = RelayProtoMaker::MakeCreateRoomResp(client_id, remote_client_id, room->room_id_, room->GetClients());
+                = RelayProtoMaker::MakeCreateRoomResp(device_id, remote_device_id, room->room_id_, room->GetDevices());
             this->PostBinMessage(resp_msg);
         }
         else {
@@ -155,13 +150,13 @@ namespace tc
 
     void RelaySession::ProcessRequestControlMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
         // request id
-        auto client_id = msg->client_id();
+        auto device_id = msg->device_id();
         auto sub = msg->request_control();
-        const auto& remote_client_id = sub.remote_client_id();
+        const auto& remote_device_id = sub.remote_device_id();
         // find remote client
-        auto remote_client = client_mgr_->FindClient(remote_client_id).lock();
+        auto remote_client = client_mgr_->FindDevice(remote_device_id).lock();
         if (!remote_client || !remote_client->IsAlive()) {
-            LOGE("Can't find client for remote: {}", remote_client_id);
+            LOGE("Can't find client for remote: {}", remote_device_id);
             auto resp_msg
                 = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeRemoteClientNotFound, msg->type());
             this->PostBinMessage(resp_msg);
@@ -175,8 +170,8 @@ namespace tc
     void RelaySession::ProcessRequestControlRespMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
         // client response
         auto sub = msg->request_control_resp();
-        const auto& requester_id = sub.client_id();
-        auto requester_client = client_mgr_->FindClient(requester_id).lock();
+        const auto& requester_id = sub.device_id();
+        auto requester_client = client_mgr_->FindDevice(requester_id).lock();
         if (!requester_client || !requester_client->IsAlive()) {
             LOGE("Can't find client for requester: {}", requester_id);
             auto resp_msg

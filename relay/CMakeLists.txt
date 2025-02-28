@@ -10,8 +10,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(SRCS
         main.cpp
-        relay_client.cpp
-        relay_client_mgr.cpp
+        relay_device.cpp
+        relay_device_mgr.cpp
         relay_room.cpp
         relay_room_mgr.cpp
         relay_server.cpp

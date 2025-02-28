@@ -11,8 +11,8 @@
 namespace tc
 {
 
-    class RelayClient;
-    class RelayClientManager;
+    class RelayDevice;
+    class RelayDeviceManager;
     class RelayRoom;
     class RelayRoomManager;
     class RelayContext;
@@ -35,9 +35,8 @@ namespace tc
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
-        std::shared_ptr<RelayClientManager> client_mgr_ = nullptr;
+        std::shared_ptr<RelayDeviceManager> client_mgr_ = nullptr;
         std::string device_id_;
-        std::string client_id_;
     };
 
 }

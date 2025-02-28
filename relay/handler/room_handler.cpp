@@ -44,7 +44,7 @@ namespace tc
                     if (auto r = room.lock(); r) {
                         json obj;
                         obj["room_id"] = r->room_id_;
-                        obj["client_id"] = r->client_id_;
+                        obj["device_id"] = r->device_id_;
                         obj_array.push_back(obj);
                     }
                 }

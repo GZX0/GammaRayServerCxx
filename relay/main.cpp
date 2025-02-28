@@ -6,9 +6,9 @@
 #include "tc_common_new/log.h"
 #include "relay_server.h"
 #include "relay_room.h"
-#include "relay_client.h"
+#include "relay_device.h"
 #include "relay_room_mgr.h"
-#include "relay_client_mgr.h"
+#include "relay_device_mgr.h"
 #include "tc_common_new/message_looper.h"
 #include "settings/relay_settings.h"
 

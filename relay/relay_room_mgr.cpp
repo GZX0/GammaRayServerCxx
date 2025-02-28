@@ -5,9 +5,9 @@
 #include <format>
 #include "relay_room_mgr.h"
 #include "relay_room.h"
-#include "relay_client_mgr.h"
+#include "relay_device_mgr.h"
 #include "relay_context.h"
-#include "relay_client.h"
+#include "relay_device.h"
 #include "tc_common_new/log.h"
 
 namespace tc
@@ -17,34 +17,34 @@ namespace tc
         context_ = ctx;
     }
 
-    std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& client_id, const std::string& remote_client_id) {
+    std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& device_id, const std::string& remote_device_id) {
         auto pm = context_->GetClientManager();
         if (!pm) {
             return std::nullopt;
         }
         // check myself
-        auto wk_client = pm->FindClient(client_id);
-        auto client = wk_client.lock();
-        if (!client|| !client->IsAlive()) {
-            LOGW("This peer[My Client] is not alive: {}", client_id);
+        auto wk_device = pm->FindDevice(device_id);
+        auto device = wk_device.lock();
+        if (!device|| !device->IsAlive()) {
+            LOGW("This peer[My Device] is not alive: {}", device_id);
             return std::nullopt;
         }
 
-        // check remote client
-        auto wk_remote_client = pm->FindClient(remote_client_id);
-        auto remote_client = wk_remote_client.lock();
-        if (!remote_client || !remote_client->IsAlive()) {
-            LOGW("This peer[Remote Client] is not alive: {}", remote_client_id);
+        // check remote device
+        auto wk_remote_device = pm->FindDevice(remote_device_id);
+        auto remote_device = wk_remote_device.lock();
+        if (!remote_device || !remote_device->IsAlive()) {
+            LOGW("This peer[Remote Client] is not alive: {}", remote_device_id);
             return std::nullopt;
         }
 
         auto room = std::make_shared<RelayRoom>();
-        room->room_id_ = std::format("{}-{}", client_id, remote_client_id);
-        room->client_id_ = client_id;
-        room->remote_client_id_ = remote_client_id;
+        room->room_id_ = std::format("{}-{}", device_id, remote_device_id);
+        room->device_id_ = device_id;
+        room->remote_device_id_ = remote_device_id;
         room->context_ = context_;
-        room->clients_.Insert(client_id, client);
-        room->clients_.Insert(remote_client_id, remote_client);
+        room->devices_.Insert(device_id, device);
+        room->devices_.Insert(remote_device_id, remote_device);
         rooms_.Insert(room->room_id_, room);
         return room;
     }
@@ -69,13 +69,13 @@ namespace tc
         return std::nullopt;
     }
 
-    std::optional<std::weak_ptr<RelayClient>> RelayRoomManager::RemoveClientInRoom(const std::string& room_id, const std::string& client_id) {
+    std::optional<std::weak_ptr<RelayDevice>> RelayRoomManager::RemoveClientInRoom(const std::string& room_id, const std::string& client_id) {
         if (!rooms_.HasKey(room_id)) {
             return std::nullopt;
         }
         auto room = rooms_.Get(room_id);
-        if (room->clients_.HasKey(client_id)) {
-            auto client = room->clients_.Get(client_id);
+        if (room->devices_.HasKey(client_id)) {
+            auto client = room->devices_.Get(client_id);
             return client;
         }
         return std::nullopt;
