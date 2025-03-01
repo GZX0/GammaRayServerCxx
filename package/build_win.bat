@@ -1,0 +1,1 @@
+cmake .. -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=C:/source/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DVCPKG_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=D:/Qt6.8/6.8.0/msvc2022_64/lib/cmake

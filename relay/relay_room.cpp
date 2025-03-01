@@ -56,4 +56,12 @@ namespace tc
         return clients;
     }
 
+    void RelayRoom::AddDevice(const std::shared_ptr<RelayDevice>& dev) {
+        devices_.Insert(dev->device_id_, dev);
+    }
+
+    std::optional<std::weak_ptr<RelayDevice>> RelayRoom::RemoveDevice(const std::string& device_id) {
+        return devices_.Remove(device_id);
+    }
+
 }

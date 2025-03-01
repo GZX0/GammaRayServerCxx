@@ -32,6 +32,10 @@ namespace tc
 
         std::vector<std::weak_ptr<RelayDevice>> GetDevices();
 
+        void AddDevice(const std::shared_ptr<RelayDevice>& dev);
+
+        std::optional<std::weak_ptr<RelayDevice>> RemoveDevice(const std::string& device_id);
+
     public:
         std::string device_id_;
         std::string remote_device_id_;

@@ -35,7 +35,7 @@ namespace tc
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
-        std::shared_ptr<RelayDeviceManager> client_mgr_ = nullptr;
+        std::shared_ptr<RelayDeviceManager> device_mgr_ = nullptr;
         std::string device_id_;
     };
 
