@@ -2,7 +2,7 @@
 // Created by RGAA on 27/02/2025.
 //
 
-#include "client_handler.h"
+#include "device_handler.h"
 #include "tc_common_new/log.h"
 #include "relay/relay_server.h"
 #include "relay/relay_context.h"
@@ -12,20 +12,20 @@
 namespace tc
 {
 
-    ClientHandler::ClientHandler(const std::shared_ptr<RelayServer>& srv) {
+    DeviceHandler::DeviceHandler(const std::shared_ptr<RelayServer>& srv) {
         server_ = srv;
         context_ = srv->GetContext();
         client_mgr_ = context_->GetClientManager();
     }
 
-    void ClientHandler::RegisterPaths() {
-        server_->AddHttpGetRouter("/query/clients/count",
+    void DeviceHandler::RegisterPaths() {
+        server_->AddHttpGetRouter("/query/device/count",
             [=, this](const auto& path, http::web_request& req, http::web_response& resp) {
                 auto params = GetQueryParams(req.query());
                 this->SendOkJson(resp, std::to_string(client_mgr_->GetClientCount()));
         });
 
-        server_->AddHttpGetRouter("/query/clients",
+        server_->AddHttpGetRouter("/query/devices",
             [=, this](const auto& path, http::web_request& req, http::web_response& resp) {
                 auto params = GetQueryParams(req.query());
                 auto opt_page = GetParam(params, "page");
@@ -52,7 +52,7 @@ namespace tc
         });
     }
 
-    std::string ClientHandler::GetErrorMessage(int code) {
+    std::string DeviceHandler::GetErrorMessage(int code) {
         if (code == 1) {
             return "";
         }

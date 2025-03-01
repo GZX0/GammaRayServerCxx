@@ -19,7 +19,7 @@ namespace tc
     }
 
     void RoomHandler::RegisterPaths() {
-        server_->AddHttpGetRouter("/query/rooms/count",
+        server_->AddHttpGetRouter("/query/room/count",
         [=, this](const auto& path, http::web_request& req, http::web_response& resp) {
             auto params = GetQueryParams(req.query());
             this->SendOkJson(resp, std::to_string(room_mgr_->GetRoomCount()));

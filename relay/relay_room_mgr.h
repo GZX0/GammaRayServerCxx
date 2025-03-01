@@ -37,6 +37,8 @@ namespace tc
 
         std::vector<std::weak_ptr<RelayRoom>> FindRooms(int page, int page_size);
 
+        void DestroyCreatedRoomsBy(const std::string& device_id);
+
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         ConcurrentHashMap<std::string, std::shared_ptr<RelayRoom>> rooms_;

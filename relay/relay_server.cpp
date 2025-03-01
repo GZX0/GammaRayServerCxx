@@ -7,7 +7,8 @@
 #include "relay_context.h"
 #include "relay_session.h"
 #include "relay_messages.h"
-#include "handler/client_handler.h"
+#include "handler/device_handler.h"
+#include "handler/room_handler.h"
 
 namespace tc
 {
@@ -58,7 +59,8 @@ namespace tc
 
     void RelayServer::InitHandlers() {
         auto sh_this = std::dynamic_pointer_cast<RelayServer>(shared_from_this());
-        handlers_.insert({ "client", std::make_shared<ClientHandler>(sh_this) });
+        handlers_.insert({ "client", std::make_shared<DeviceHandler>(sh_this) });
+        handlers_.insert({ "room", std::make_shared<RoomHandler>(sh_this) });
 
         for (const auto& [k, handler] : handlers_) {
             handler->RegisterPaths();

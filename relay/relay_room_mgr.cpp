@@ -99,4 +99,8 @@ namespace tc
         return target_rooms;
     }
 
+    void RelayRoomManager::DestroyCreatedRoomsBy(const std::string& device_id) {
+
+    }
+
 }

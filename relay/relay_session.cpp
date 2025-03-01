@@ -31,15 +31,17 @@ namespace tc
 
         this->device_id_ = device_id.value();
 
-        auto peer = std::make_shared<RelayDevice>();
-        peer->device_id_ = this->device_id_;
-        peer->socket_fd_ = socket_fd_;
-        peer->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
-        peer->sess_ = shared_from_this();
-        device_mgr_->AddClient(peer);
+        auto device = std::make_shared<RelayDevice>();
+        device->device_id_ = this->device_id_;
+        device->socket_fd_ = socket_fd_;
+        device->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+        device->sess_ = shared_from_this();
+        device_mgr_->AddClient(device);
+        LOGI("--> New session: {}", this->device_id_);
     }
 
     void RelaySession::OnDisConnected() {
+        room_mgr_->DestroyCreatedRoomsBy(this->device_id_);
         device_mgr_->RemoveClient(this->device_id_);
     }
 
@@ -111,21 +113,17 @@ namespace tc
     void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto from_device_id = msg->from_device_id();
         auto sub = msg->relay();
-        const auto& remote_device_id = sub.remote_device_id();
-        auto opt_room = room_mgr_->FindRoom(sub.room_id());
-        if (!opt_room.has_value()) {
-            LOGW("Can't find room for id: {}, request device id: {}", sub.room_id(), from_device_id);
-            return;
+        int room_size = sub.room_ids_size();
+        for (int i = 0; i < room_size; i++) {
+            auto room_id = sub.room_ids().at(i);
+            auto room = room_mgr_->FindRoom(room_id)->lock();
+            if (!room) {
+                LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
+                continue;
+            }
+            LOGI("Relay in room: {}", room_id);
+            room->NotifyExcept(from_device_id, sub.payload());
         }
-
-        auto wk_room = opt_room.value();
-        auto room = wk_room.lock();
-        if (!room) {
-            LOGW("Room: {} already destroyed.", sub.room_id());
-            return;
-        }
-
-        room->NotifyTarget(remote_device_id, sub.payload());
     }
 
     void RelaySession::ProcessCreateRoomMessage(std::shared_ptr<RelayMessage>&& msg) {

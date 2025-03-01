@@ -2,8 +2,8 @@
 // Created by RGAA on 27/02/2025.
 //
 
-#ifndef GAMMARAYSERVER_CLIENT_HANDLER_H
-#define GAMMARAYSERVER_CLIENT_HANDLER_H
+#ifndef GAMMARAYSERVER_DEVICE_HANDLER_H
+#define GAMMARAYSERVER_DEVICE_HANDLER_H
 
 #include "tc_common_new/base_handler.h"
 
@@ -14,9 +14,9 @@ namespace tc
     class RelayServer;
     class RelayDeviceManager;
 
-    class ClientHandler : public BaseHandler {
+    class DeviceHandler : public BaseHandler {
     public:
-        explicit ClientHandler(const std::shared_ptr<RelayServer>& srv);
+        explicit DeviceHandler(const std::shared_ptr<RelayServer>& srv);
         void RegisterPaths() override;
         std::string GetErrorMessage(int code) override;
 
@@ -28,4 +28,4 @@ namespace tc
 
 }
 
-#endif //GAMMARAYSERVER_CLIENT_HANDLER_H
+#endif //GAMMARAYSERVER_DEVICE_HANDLER_H
