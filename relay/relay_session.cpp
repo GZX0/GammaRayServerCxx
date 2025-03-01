@@ -68,7 +68,7 @@ namespace tc
             ProcessHeartbeatMessage(std::move(msg));
         }
         else if (type == RelayMessageType::kRelayTargetMessage) {
-            ProcessRelayTargetMessage(std::move(msg));
+            ProcessRelayTargetMessage(std::move(msg), data);
         }
         else if (type == RelayMessageType::kRelayCreateRoom) {
             ProcessCreateRoomMessage(std::move(msg));
@@ -110,7 +110,7 @@ namespace tc
         client->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
     }
 
-    void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg) {
+    void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
         auto from_device_id = msg->from_device_id();
         auto sub = msg->relay();
         int room_size = sub.room_ids_size();
@@ -121,8 +121,8 @@ namespace tc
                 LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
                 continue;
             }
-            LOGI("Relay in room: {}", room_id);
-            room->NotifyExcept(from_device_id, sub.payload());
+            //LOGI("Relay in room: {}", room_id);
+            room->NotifyExcept(from_device_id, std::string{data});
         }
     }
 

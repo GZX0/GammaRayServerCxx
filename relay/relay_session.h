@@ -27,7 +27,7 @@ namespace tc
         void ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
         void ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg);
         void ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg);
-        void ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg);
+        void ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
         void ProcessCreateRoomMessage(std::shared_ptr<RelayMessage>&& msg);
         void ProcessRequestControlMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
         void ProcessRequestControlRespMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
