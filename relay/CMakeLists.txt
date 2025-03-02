@@ -23,3 +23,4 @@ set(SRCS
 )
 add_executable(${PROJECT_NAME} ${SRCS})
 target_link_libraries(${PROJECT_NAME} tc_common_new tc_relay_message)
+target_link_libraries(${PROJECT_NAME} redis++::redis++)

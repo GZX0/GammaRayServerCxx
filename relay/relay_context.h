@@ -8,6 +8,9 @@
 #include <memory>
 #include <asio2/asio2.hpp>
 #include "tc_common_new/message_notifier.h"
+#include <sw/redis++/redis++.h>
+
+using namespace sw::redis;
 
 namespace tc
 {
@@ -23,7 +26,7 @@ namespace tc
         std::shared_ptr<RelayDeviceManager> GetClientManager();
         std::shared_ptr<RelayRoomManager> GetRoomManager();
         std::shared_ptr<MessageListener> CreateListener();
-
+        std::shared_ptr<Redis> GetRedis();
         void PostInMainLoop(std::function<void()>&& task);
 
         template<typename T>
@@ -40,6 +43,7 @@ namespace tc
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
         std::shared_ptr<asio2::timer> timer_ = nullptr;
         std::shared_ptr<MessageNotifier> msg_notifier_ = nullptr;
+        std::shared_ptr<Redis> redis_ = nullptr;
     };
 
 }

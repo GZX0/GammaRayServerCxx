@@ -24,11 +24,15 @@ if(MSVC)
     link_directories(${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/openssl/x64/lib/VC)
 endif()
 
+#PROTOBUF
 set(Protobuf_SRC_ROOT_FOLDER ${CMAKE_SOURCE_DIR}/deps/tc_3rdparty/protobuf)
 if(CMAKE_BUILD_TYPE MATCHES "Release" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     set(Protobuf_LIBRARIES ${CMAKE_BINARY_DIR}/deps/tc_3rdparty/protobuf/cmake/libprotobuf.lib)
 endif()
 find_package(Protobuf REQUIRED)
+
+#REDIS
+find_package(redis++ CONFIG REQUIRED)
 
 add_subdirectory(deps)
 add_subdirectory(manager)

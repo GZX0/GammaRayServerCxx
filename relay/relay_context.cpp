@@ -21,6 +21,8 @@ namespace tc
         msg_notifier_ = std::make_shared<MessageNotifier>();
         room_mgr_ = std::make_shared<RelayRoomManager>(sh_this);
         client_mgr_ = std::make_shared<RelayDeviceManager>(sh_this);
+        redis_ = std::make_shared<Redis>("tcp://127.0.0.1:6379");
+
         StartTimers();
         return true;
     }
@@ -35,6 +37,10 @@ namespace tc
 
     std::shared_ptr<MessageListener> RelayContext::CreateListener() {
         return msg_notifier_->CreateListener();
+    }
+
+    std::shared_ptr<Redis> RelayContext::GetRedis() {
+        return redis_;
     }
 
     void RelayContext::PostInMainLoop(std::function<void()>&& task) {
