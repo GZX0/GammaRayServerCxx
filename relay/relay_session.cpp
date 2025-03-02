@@ -116,7 +116,12 @@ namespace tc
         int room_size = sub.room_ids_size();
         for (int i = 0; i < room_size; i++) {
             auto room_id = sub.room_ids().at(i);
-            auto room = room_mgr_->FindRoom(room_id)->lock();
+            auto opt_room = room_mgr_->FindRoom(room_id);
+            if (!opt_room.has_value()) {
+                LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
+                continue;
+            }
+            auto room = opt_room.value().lock();
             if (!room) {
                 LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
                 continue;
