@@ -34,6 +34,11 @@ namespace tc
 
         std::vector<std::shared_ptr<RelayDevice>> FindDevices(int page, int page_size);
 
+        // device_id: room creator
+        // remote_device_id: will be notified
+        // room_id: room's id
+        void NotifyDeviceRoomDestroyed(const std::string& device_id, const std::string& remote_device_id, const std::string& room_id);
+
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayServer> server_ = nullptr;

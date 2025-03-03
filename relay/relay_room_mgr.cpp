@@ -9,17 +9,24 @@
 #include "relay_context.h"
 #include "relay_device.h"
 #include "tc_common_new/log.h"
+#include "tc_common_new/time_ext.h"
 
 namespace tc
 {
 
+    static const std::string kRsRoomId = "room_id";
+    static const std::string kRsRoomDeviceId = "device_id";
+    static const std::string kRsRoomRemoteDeviceId = "remote_device_id";
+    static const std::string kRsRoomLastUpdateTimestamp = "last_update_timestamp";
+
     RelayRoomManager::RelayRoomManager(const std::shared_ptr<RelayContext>& ctx, const std::shared_ptr<RelayServer>& server) {
         context_ = ctx;
+        redis_ = context_->GetRedis();
         server_ = server;
     }
 
     std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& device_id, const std::string& remote_device_id) {
-        auto pm = context_->GetClientManager();
+        auto pm = context_->GetDeviceManager();
         if (!pm) {
             return std::nullopt;
         }
@@ -37,14 +44,30 @@ namespace tc
             return std::nullopt;
         }
 
+        auto room_id = std::format("room:{}-{}", device_id, remote_device_id);
         auto room = std::make_shared<RelayRoom>();
-        room->room_id_ = std::format("{}-{}", device_id, remote_device_id);
+        room->room_id_ = room_id;
         room->device_id_ = device_id;
         room->remote_device_id_ = remote_device_id;
         room->context_ = context_;
         room->devices_.Insert(device_id, device);
         room->devices_.Insert(remote_device_id, remote_device);
         rooms_.Insert(room->room_id_, room);
+
+        // insert to redis
+        try {
+            std::unordered_map<std::string, std::string> values = {
+                {kRsRoomId, room_id},
+                {kRsRoomDeviceId, device_id},
+                {kRsRoomRemoteDeviceId, remote_device_id},
+                {kRsRoomLastUpdateTimestamp, std::to_string(TimeExt::GetCurrentTimestamp())},
+            };
+            redis_->hmset(room_id, values.begin(), values.end());
+        }
+        catch(std::exception& e) {
+            LOGE("HMSET failed for CreateRoom: {}", e.what());
+        }
+
         return room;
     }
 
@@ -99,7 +122,53 @@ namespace tc
     }
 
     void RelayRoomManager::DestroyCreatedRoomsBy(const std::string& device_id) {
+        try {
+            std::vector<std::string> room_ids;
+            redis_->keys(std::format("room:{}*", device_id), std::back_inserter(room_ids));
+            if (room_ids.empty()) {
+                return;
+            }
+            for (const auto& room_id : room_ids) {
+                std::unordered_map<std::string, std::string> values;
+                redis_->hgetall(room_id, std::inserter(values, values.begin()));
+                if (values.empty()) {
+                    continue;
+                }
 
+                // get remote device id and notify the device
+                std::string remote_device_id;
+                for (const auto& [key, val] : values) {
+                    if (key == kRsRoomRemoteDeviceId) {
+                        remote_device_id = val;
+                        break;
+                    }
+                }
+                auto device_mgr = context_->GetDeviceManager();
+                device_mgr->NotifyDeviceRoomDestroyed(device_id, remote_device_id, room_id);
+
+                // delete in redis
+                redis_->del(room_id);
+            }
+        }
+        catch(std::exception& e) {
+            LOGE("OnHeartBeatForMyRoom failed: {}, id: {}", e.what(), device_id);
+        }
+    }
+
+    void RelayRoomManager::OnHeartBeatForMyRoom(const std::string& device_id) {
+        try {
+            std::vector<std::string> room_ids;
+            redis_->keys(std::format("room:{}*", device_id), std::back_inserter(room_ids));
+            if (room_ids.empty()) {
+                return;
+            }
+            for (const auto& room_id : room_ids) {
+                redis_->hset(room_id, kRsRoomLastUpdateTimestamp, std::to_string(TimeExt::GetCurrentTimestamp()));
+            }
+        }
+        catch(std::exception& e) {
+            LOGE("OnHeartBeatForMyRoom failed: {}, id: {}", e.what(), device_id);
+        }
     }
 
 }

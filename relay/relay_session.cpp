@@ -28,7 +28,7 @@ namespace tc
         }
 
         room_mgr_ = context_->GetRoomManager();
-        device_mgr_ = context_->GetClientManager();
+        device_mgr_ = context_->GetDeviceManager();
 
         auto device_id = GetQueryParam("device_id");
         if (!device_id.has_value()) {
@@ -115,7 +115,10 @@ namespace tc
             this->PostBinMessage(resp_msg);
             return;
         }
+        // for device
         device_mgr_->OnHeartBeat(device_id);
+        // for rooms created by this device
+        room_mgr_->OnHeartBeatForMyRoom(device_id);
     }
 
     void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {

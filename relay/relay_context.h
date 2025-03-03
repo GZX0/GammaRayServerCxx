@@ -26,7 +26,7 @@ namespace tc
         bool Init(const std::shared_ptr<RelayDeviceManager>& dev_mgr,
                   const std::shared_ptr<RelayRoomManager>& room_mgr);
 
-        std::shared_ptr<RelayDeviceManager> GetClientManager();
+        std::shared_ptr<RelayDeviceManager> GetDeviceManager();
         std::shared_ptr<RelayRoomManager> GetRoomManager();
         std::shared_ptr<MessageListener> CreateListener();
         std::shared_ptr<Redis> GetRedis();

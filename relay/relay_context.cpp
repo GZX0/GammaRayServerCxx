@@ -29,7 +29,7 @@ namespace tc
         return true;
     }
 
-    std::shared_ptr<RelayDeviceManager> RelayContext::GetClientManager() {
+    std::shared_ptr<RelayDeviceManager> RelayContext::GetDeviceManager() {
         return device_mgr_;
     }
 

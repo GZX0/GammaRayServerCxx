@@ -8,6 +8,9 @@
 #include <memory>
 #include <optional>
 #include "tc_common_new/concurrent_hashmap.h"
+#include <sw/redis++/redis++.h>
+
+using namespace sw::redis;
 
 namespace tc
 {
@@ -40,9 +43,12 @@ namespace tc
 
         void DestroyCreatedRoomsBy(const std::string& device_id);
 
+        void OnHeartBeatForMyRoom(const std::string& device_id);
+
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayServer> server_ = nullptr;
+        std::shared_ptr<Redis> redis_ = nullptr;
         ConcurrentHashMap<std::string, std::shared_ptr<RelayRoom>> rooms_;
     };
 

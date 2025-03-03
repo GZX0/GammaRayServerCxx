@@ -7,8 +7,8 @@
 namespace tc
 {
 
-    void MgrSession::OnConnected() {
-
+    bool MgrSession::OnConnected() {
+        return true;
     }
 
     void MgrSession::OnDisConnected() {

@@ -15,7 +15,7 @@ namespace tc
     DeviceHandler::DeviceHandler(const std::shared_ptr<RelayServer>& srv) {
         server_ = srv;
         context_ = srv->GetContext();
-        client_mgr_ = context_->GetClientManager();
+        client_mgr_ = context_->GetDeviceManager();
     }
 
     void DeviceHandler::RegisterPaths() {

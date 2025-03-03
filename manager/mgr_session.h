@@ -12,7 +12,7 @@ namespace tc
 
     class MgrSession : public WsSession, public std::enable_shared_from_this<MgrSession> {
     public:
-        void OnConnected() override;
+        bool OnConnected() override;
         void OnDisConnected() override;
         void OnBinMessage(std::string_view data) override;
 

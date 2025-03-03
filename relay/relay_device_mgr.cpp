@@ -9,7 +9,7 @@
 #include "relay_server.h"
 #include "relay_session.h"
 #include "tc_common_new/time_ext.h"
-#include <format>
+#include "relay_message.pb.h"
 
 namespace tc
 {
@@ -121,5 +121,23 @@ namespace tc
         }
 
         return {};
+    }
+
+    void RelayDeviceManager::NotifyDeviceRoomDestroyed(const std::string& device_id, const std::string& remote_device_id, const std::string& room_id) {
+        // device id: this device has left.
+        // remote device id: this device will be notified
+        auto remote_device = FindDevice(remote_device_id);
+        if (!remote_device) {
+            LOGW("Notify device: {} room: {} destroyed, but the device does not exist");
+            return;
+        }
+
+        RelayMessage rl_msg;
+        rl_msg.set_type(RelayMessageType::kRelayRoomDestroyed);
+        auto sub = rl_msg.mutable_room_destroyed();
+        sub->set_room_id(room_id);
+        sub->set_device_id(device_id);
+        sub->set_remote_device_id(remote_device_id);
+        remote_device->Notify(rl_msg.SerializeAsString());
     }
 }
