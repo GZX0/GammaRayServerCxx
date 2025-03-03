@@ -11,8 +11,8 @@ namespace tc
     // -->  client 2
     //      client 3
     void RelayRoom::NotifyAll(const std::string& msg) {
-        devices_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayDevice>& client) {
-            auto target_client = client.lock();
+        devices_.ApplyAll([&](const std::string& id, const std::shared_ptr<RelayDevice>& client) {
+            auto target_client = client;
             if (target_client) {
                 target_client->Notify(msg);
             }
@@ -21,9 +21,9 @@ namespace tc
 
     // --> client[client id]
     void RelayRoom::NotifyTarget(const std::string& device_id, const std::string& msg) {
-        devices_.ApplyAllCond([&](const std::string& id, const std::weak_ptr<RelayDevice>& client) {
+        devices_.ApplyAllCond([&](const std::string& id, const std::shared_ptr<RelayDevice>& client) {
             if (id == device_id) {
-                auto target_client = client.lock();
+                auto target_client = client;
                 if (target_client) {
                     target_client->Notify(msg);
                 }
@@ -37,19 +37,20 @@ namespace tc
     // -->  client 2
     //      client 3
     void RelayRoom::NotifyExcept(const std::string& device_id, const std::string& msg) {
-        devices_.ApplyAll([&](const std::string& id, const std::weak_ptr<RelayDevice>& client) {
+        //LOGI("device size in room : {}", devices_.Size());
+        devices_.ApplyAll([&](const std::string& id, const std::shared_ptr<RelayDevice>& device) {
             if (id == device_id) {
                 return;
             }
-            auto target_client = client.lock();
-            if (target_client) {
-                target_client->Notify(msg);
+            if (device) {
+                //LOGI("Notify for : {}", device->device_id_);
+                device->Notify(msg);
             }
         });
     }
 
-    std::vector<std::weak_ptr<RelayDevice>> RelayRoom::GetDevices() {
-        std::vector<std::weak_ptr<RelayDevice>> clients;
+    std::vector<std::shared_ptr<RelayDevice>> RelayRoom::GetDevices() {
+        std::vector<std::shared_ptr<RelayDevice>> clients;
         devices_.ApplyAll([&](const auto& k, const auto& client) {
             clients.push_back(client);
         });
@@ -60,7 +61,7 @@ namespace tc
         devices_.Insert(dev->device_id_, dev);
     }
 
-    std::optional<std::weak_ptr<RelayDevice>> RelayRoom::RemoveDevice(const std::string& device_id) {
+    std::optional<std::shared_ptr<RelayDevice>> RelayRoom::RemoveDevice(const std::string& device_id) {
         return devices_.Remove(device_id);
     }
 

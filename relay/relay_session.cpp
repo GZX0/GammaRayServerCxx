@@ -44,7 +44,7 @@ namespace tc
         device->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
         device->sess_ = shared_from_this();
         device_mgr_->AddDevice(device);
-        LOGI("--> New session: {}", this->device_id_);
+        LOGI("--> New session: {}, socket fd: {}, timestamp: {}", this->device_id_, socket_fd_, device->last_update_timestamp_);
 
         return true;
     }
@@ -93,8 +93,8 @@ namespace tc
     void RelaySession::ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto from_device_id = msg->from_device_id();
         auto sub = msg->hello();
-        auto client = device_mgr_->FindDevice(from_device_id).lock();
-        if (!client) {
+        auto device = device_mgr_->FindDevice(from_device_id);
+        if (!device) {
             LOGE("Can't find my device_id for: {}", from_device_id);
             // my state is illegal
             auto resp_msg
@@ -102,21 +102,20 @@ namespace tc
             this->PostBinMessage(resp_msg);
             return;
         }
-        client->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
     }
 
     void RelaySession::ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto device_id = msg->from_device_id();
         auto sub = msg->heartbeat();
-        auto client = device_mgr_->FindDevice(device_id).lock();
-        if (!client) {
+        auto device = device_mgr_->FindDevice(device_id);
+        if (!device) {
             LOGE("Can't find my device_id for: {}", device_id);
             auto resp_msg
                     = RelayProtoMaker::MakeErrorMessage(RelayErrorCode::kRelayCodeClientNotFound, msg->type());
             this->PostBinMessage(resp_msg);
             return;
         }
-        client->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
+        device_mgr_->OnHeartBeat(device_id);
     }
 
     void RelaySession::ProcessRelayTargetMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data) {
@@ -127,12 +126,12 @@ namespace tc
             auto room_id = sub.room_ids().at(i);
             auto opt_room = room_mgr_->FindRoom(room_id);
             if (!opt_room.has_value()) {
-                LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
+                //LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
                 continue;
             }
             auto room = opt_room.value().lock();
             if (!room) {
-                LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
+                //LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
                 continue;
             }
             //LOGI("Relay in room: {}", room_id);
@@ -166,7 +165,7 @@ namespace tc
         const auto& device_id = sub.device_id();
         const auto& remote_device_id = sub.remote_device_id();
         // find remote client
-        auto remote_client = device_mgr_->FindDevice(remote_device_id).lock();
+        auto remote_client = device_mgr_->FindDevice(remote_device_id);
         if (!remote_client || !remote_client->IsAlive()) {
             LOGE("Can't find client for remote: {}", remote_device_id);
             auto resp_msg
@@ -184,7 +183,7 @@ namespace tc
         auto sub = msg->request_control_resp();
         // requester
         const auto& req_device_id = sub.device_id();
-        auto req_device = device_mgr_->FindDevice(req_device_id).lock();
+        auto req_device = device_mgr_->FindDevice(req_device_id);
         if (!req_device || !req_device->IsAlive()) {
             LOGE("Can't find client for requester: {}", req_device_id);
             auto resp_msg
@@ -212,7 +211,7 @@ namespace tc
             }
 
             //
-            auto resp_device = device_mgr_->FindDevice(sub.remote_device_id()).lock();
+            auto resp_device = device_mgr_->FindDevice(sub.remote_device_id());
             if (!resp_device) {
                 LOGE("Resp device invalid: {}", sub.remote_device_id());
                 return;

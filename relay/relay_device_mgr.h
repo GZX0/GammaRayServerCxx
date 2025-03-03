@@ -15,26 +15,30 @@ namespace tc
 {
     class RelayDevice;
     class RelayContext;
+    class RelayServer;
 
     class RelayDeviceManager {
     public:
-        explicit RelayDeviceManager(const std::shared_ptr<RelayContext>& ctx);
+        explicit RelayDeviceManager(const std::shared_ptr<RelayContext>& ctx, const std::shared_ptr<RelayServer>& server);
         //
         void AddDevice(const std::shared_ptr<RelayDevice>& device);
         //
-        std::optional<std::shared_ptr<RelayDevice>> RemoveDevice(const std::string& device_id);
+        bool RemoveDevice(const std::string& device_id);
         //
-        std::weak_ptr<RelayDevice> FindDevice(const std::string& device_id);
+        std::shared_ptr<RelayDevice> FindDevice(const std::string& device_id);
+        //
+        void OnHeartBeat(const std::string& device_id);
 
         // total count
         uint32_t GetClientCount();
 
-        std::vector<std::weak_ptr<RelayDevice>> FindDevices(int page, int page_size);
+        std::vector<std::shared_ptr<RelayDevice>> FindDevices(int page, int page_size);
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
+        std::shared_ptr<RelayServer> server_ = nullptr;
         std::shared_ptr<Redis> redis_ = nullptr;
-        ConcurrentHashMap<std::string, std::shared_ptr<RelayDevice>> devices_;
+        //ConcurrentHashMap<std::string, std::shared_ptr<RelayDevice>> devices_;
     };
 }
 

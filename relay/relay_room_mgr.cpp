@@ -13,8 +13,9 @@
 namespace tc
 {
 
-    RelayRoomManager::RelayRoomManager(const std::shared_ptr<RelayContext>& ctx) {
+    RelayRoomManager::RelayRoomManager(const std::shared_ptr<RelayContext>& ctx, const std::shared_ptr<RelayServer>& server) {
         context_ = ctx;
+        server_ = server;
     }
 
     std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::CreateRoom(const std::string& device_id, const std::string& remote_device_id) {
@@ -23,16 +24,14 @@ namespace tc
             return std::nullopt;
         }
         // check myself
-        auto wk_device = pm->FindDevice(device_id);
-        auto device = wk_device.lock();
+        auto device = pm->FindDevice(device_id);
         if (!device|| !device->IsAlive()) {
             LOGW("This peer[My Device] is not alive: {}", device_id);
             return std::nullopt;
         }
 
         // check remote device
-        auto wk_remote_device = pm->FindDevice(remote_device_id);
-        auto remote_device = wk_remote_device.lock();
+        auto remote_device = pm->FindDevice(remote_device_id);
         if (!remote_device || !remote_device->IsAlive()) {
             LOGW("This peer[Remote Client] is not alive: {}", remote_device_id);
             return std::nullopt;

@@ -27,7 +27,7 @@ namespace tc
         static std::string MakeCreateRoomResp(const std::string& device_id,
                                               const std::string& remote_device_id,
                                               const std::string& room_id,
-                                              const std::vector<std::weak_ptr<RelayDevice>>& devices);
+                                              const std::vector<std::shared_ptr<RelayDevice>>& devices);
 
     private:
         static std::string GetErrorMessage(const RelayErrorCode& code);

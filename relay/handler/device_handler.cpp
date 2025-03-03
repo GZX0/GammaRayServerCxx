@@ -41,11 +41,9 @@ namespace tc
                 auto clients = client_mgr_->FindDevices(page, page_size);
                 json obj_array = json::array();
                 for (const auto& client : clients) {
-                    if (auto c = client.lock(); c) {
-                        json obj;
-                        obj["device_id"] = c->device_id_;
-                        obj_array.push_back(obj);
-                    }
+                    json obj;
+                    obj["device_id"] = client->device_id_;
+                    obj_array.push_back(obj);
                 }
 
                 this->SendOkJson(resp, obj_array.dump());

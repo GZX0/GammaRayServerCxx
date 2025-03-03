@@ -12,23 +12,25 @@
 namespace tc
 {
 
-    RelayContext::RelayContext(const std::shared_ptr<MessageLooper>& looper) {
+    RelayContext::RelayContext(const std::shared_ptr<MessageLooper>& looper, const std::shared_ptr<Redis>& redis) {
         this->msg_looper_ = looper;
+        this->redis_ = redis;
     }
 
-    bool RelayContext::Init() {
+    bool RelayContext::Init(const std::shared_ptr<RelayDeviceManager>& dev_mgr,
+                            const std::shared_ptr<RelayRoomManager>& room_mgr) {
         auto sh_this = shared_from_this();
-        redis_ = std::make_shared<Redis>("tcp://127.0.0.1:6379");
+        this->device_mgr_ = dev_mgr;
+        this->room_mgr_ = room_mgr;
+
         msg_notifier_ = std::make_shared<MessageNotifier>();
-        room_mgr_ = std::make_shared<RelayRoomManager>(sh_this);
-        client_mgr_ = std::make_shared<RelayDeviceManager>(sh_this);
 
         StartTimers();
         return true;
     }
 
     std::shared_ptr<RelayDeviceManager> RelayContext::GetClientManager() {
-        return client_mgr_;
+        return device_mgr_;
     }
 
     std::shared_ptr<RelayRoomManager> RelayContext::GetRoomManager() {

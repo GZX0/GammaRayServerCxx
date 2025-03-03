@@ -28,7 +28,7 @@ namespace tc
     std::string RelayProtoMaker::MakeCreateRoomResp(const std::string& device_id,
                                           const std::string& remote_device_id,
                                           const std::string& room_id,
-                                          const std::vector<std::weak_ptr<RelayDevice>>& devices) {
+                                          const std::vector<std::shared_ptr<RelayDevice>>& devices) {
         RelayMessage rl_msg;
         rl_msg.set_type(RelayMessageType::kRelayCreateRoomResp);
         auto resp = rl_msg.mutable_create_room_resp();

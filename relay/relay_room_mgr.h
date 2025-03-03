@@ -14,10 +14,11 @@ namespace tc
     class RelayDevice;
     class RelayRoom;
     class RelayContext;
+    class RelayServer;
 
     class RelayRoomManager {
     public:
-        explicit RelayRoomManager(const std::shared_ptr<RelayContext>& ctx);
+        explicit RelayRoomManager(const std::shared_ptr<RelayContext>& ctx, const std::shared_ptr<RelayServer>& server);
         // success: RelayRoom ptr
         // failed: nullptr
         std::optional<std::shared_ptr<RelayRoom>> CreateRoom(const std::string& device_id, const std::string& remote_device_id);
@@ -41,6 +42,7 @@ namespace tc
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
+        std::shared_ptr<RelayServer> server_ = nullptr;
         ConcurrentHashMap<std::string, std::shared_ptr<RelayRoom>> rooms_;
     };
 

@@ -30,18 +30,18 @@ namespace tc
         //      client 3
         void NotifyExcept(const std::string& device_id, const std::string& msg);
 
-        std::vector<std::weak_ptr<RelayDevice>> GetDevices();
+        std::vector<std::shared_ptr<RelayDevice>> GetDevices();
 
         void AddDevice(const std::shared_ptr<RelayDevice>& dev);
 
-        std::optional<std::weak_ptr<RelayDevice>> RemoveDevice(const std::string& device_id);
+        std::optional<std::shared_ptr<RelayDevice>> RemoveDevice(const std::string& device_id);
 
     public:
         std::string device_id_;
         std::string remote_device_id_;
         std::string room_id_;
 
-        ConcurrentHashMap<std::string, std::weak_ptr<RelayDevice>> devices_;
+        ConcurrentHashMap<std::string, std::shared_ptr<RelayDevice>> devices_;
         std::shared_ptr<RelayContext> context_ = nullptr;
     };
 

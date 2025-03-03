@@ -10,13 +10,16 @@ namespace tc
 {
 
     void RelayDevice::Notify(const std::string& msg) const {
-        if (sess_) {
-            sess_->PostBinMessage(msg);
+        if (auto sess = sess_.lock(); sess) {
+            sess->PostBinMessage(msg);
+        }
+        else {
+            LOGE("No session for id: {}", this->device_id_);
         }
     }
 
     bool RelayDevice::IsAlive() const {
-        auto diff = last_update_timestamp_ - (int64_t)TimeExt::GetCurrentTimestamp();
+        auto diff = (int64_t)TimeExt::GetCurrentTimestamp() - last_update_timestamp_ ;
         return diff < 1000 * 60;
     }
 

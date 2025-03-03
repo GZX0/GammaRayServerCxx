@@ -22,8 +22,8 @@ namespace tc
         std::string device_id_;
         int64_t last_update_timestamp_ = 0;
         int64_t socket_fd_{0};
-        // todo: weak ptr here, all in RelayServer
-        std::shared_ptr<RelaySession> sess_ = nullptr;
+
+        std::weak_ptr<RelaySession> sess_{};
     };
 
 }
