@@ -7,6 +7,9 @@
 
 #include <memory>
 #include "tc_common_new/concurrent_hashmap.h"
+#include <sw/redis++/redis++.h>
+
+using namespace sw::redis;
 
 namespace tc
 {
@@ -17,9 +20,9 @@ namespace tc
     public:
         explicit RelayDeviceManager(const std::shared_ptr<RelayContext>& ctx);
         //
-        void AddClient(const std::shared_ptr<RelayDevice>& device);
+        void AddDevice(const std::shared_ptr<RelayDevice>& device);
         //
-        std::optional<std::shared_ptr<RelayDevice>> RemoveClient(const std::string& device_id);
+        std::optional<std::shared_ptr<RelayDevice>> RemoveDevice(const std::string& device_id);
         //
         std::weak_ptr<RelayDevice> FindDevice(const std::string& device_id);
 
@@ -30,6 +33,7 @@ namespace tc
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
+        std::shared_ptr<Redis> redis_ = nullptr;
         ConcurrentHashMap<std::string, std::shared_ptr<RelayDevice>> devices_;
     };
 }

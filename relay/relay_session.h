@@ -16,12 +16,15 @@ namespace tc
     class RelayRoom;
     class RelayRoomManager;
     class RelayContext;
+    class RelayServer;
 
     class RelaySession : public WsSession, public std::enable_shared_from_this<RelaySession> {
     public:
-        void OnConnected() override;
+        bool OnConnected() override;
         void OnDisConnected() override;
         void OnBinMessage(std::string_view data) override;
+
+        std::string GetDeviceId() { return device_id_; }
 
     private:
         void ProcessRelayMessage(std::shared_ptr<RelayMessage>&& msg, std::string_view data);
@@ -34,6 +37,7 @@ namespace tc
 
     private:
         std::shared_ptr<RelayContext> context_ = nullptr;
+        std::shared_ptr<RelayServer> server_ = nullptr;
         std::shared_ptr<RelayRoomManager> room_mgr_ = nullptr;
         std::shared_ptr<RelayDeviceManager> device_mgr_ = nullptr;
         std::string device_id_;

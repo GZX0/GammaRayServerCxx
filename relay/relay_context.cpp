@@ -18,10 +18,10 @@ namespace tc
 
     bool RelayContext::Init() {
         auto sh_this = shared_from_this();
+        redis_ = std::make_shared<Redis>("tcp://127.0.0.1:6379");
         msg_notifier_ = std::make_shared<MessageNotifier>();
         room_mgr_ = std::make_shared<RelayRoomManager>(sh_this);
         client_mgr_ = std::make_shared<RelayDeviceManager>(sh_this);
-        redis_ = std::make_shared<Redis>("tcp://127.0.0.1:6379");
 
         StartTimers();
         return true;

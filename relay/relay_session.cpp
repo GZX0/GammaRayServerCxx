@@ -10,23 +10,30 @@
 #include "relay_context.h"
 #include "relay_proto_maker.h"
 #include "relay_message.pb.h"
+#include "relay_server.h"
 #include "tc_common_new/time_ext.h"
 
 namespace tc
 {
 
-    void RelaySession::OnConnected() {
-        auto opt_ctx = GetVar<std::shared_ptr<RelayContext>>("context");
-        if (opt_ctx.has_value()) {
-            context_ = opt_ctx.value();
+    bool RelaySession::OnConnected() {
+        context_ = GetVar<std::shared_ptr<RelayContext>>("context").value_or(nullptr);
+        if (!context_) {
+            return false;
         }
+
+        server_ = GetVar<std::shared_ptr<RelayServer>>("server").value_or(nullptr);
+        if (!server_) {
+            return false;
+        }
+
         room_mgr_ = context_->GetRoomManager();
         device_mgr_ = context_->GetClientManager();
 
         auto device_id = GetQueryParam("device_id");
         if (!device_id.has_value()) {
             LOGE("Don't have a device id, will not work!");
-            return;
+            return false;
         }
 
         this->device_id_ = device_id.value();
@@ -36,13 +43,15 @@ namespace tc
         device->socket_fd_ = socket_fd_;
         device->last_update_timestamp_ = (int64_t)TimeExt::GetCurrentTimestamp();
         device->sess_ = shared_from_this();
-        device_mgr_->AddClient(device);
+        device_mgr_->AddDevice(device);
         LOGI("--> New session: {}", this->device_id_);
+
+        return true;
     }
 
     void RelaySession::OnDisConnected() {
         room_mgr_->DestroyCreatedRoomsBy(this->device_id_);
-        device_mgr_->RemoveClient(this->device_id_);
+        device_mgr_->RemoveDevice(this->device_id_);
     }
 
     void RelaySession::OnBinMessage(std::string_view data) {

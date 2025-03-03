@@ -14,6 +14,7 @@ namespace tc
     class RelayContext;
     class MessageListener;
     class BaseHandler;
+    class RelaySession;
 
     class RelayServer : public WsServer {
     public:
@@ -23,6 +24,8 @@ namespace tc
         void Start();
         void Exit() override;
         std::shared_ptr<RelayContext> GetContext();
+
+        std::weak_ptr<RelaySession> FindSessionByDeviceId(const std::string& device_id);
 
     private:
         void InitMessageListener();

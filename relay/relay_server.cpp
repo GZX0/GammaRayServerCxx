@@ -7,6 +7,7 @@
 #include "relay_context.h"
 #include "relay_session.h"
 #include "relay_messages.h"
+#include "relay_session.h"
 #include "handler/device_handler.h"
 #include "handler/room_handler.h"
 
@@ -26,6 +27,7 @@ namespace tc
         // 1. prepare
         WsServer::Prepare({
             {"context", context_},
+            {"server", std::dynamic_pointer_cast<RelayServer>(shared_from_this())}
         });
 
         // 2. add relay path
@@ -67,4 +69,19 @@ namespace tc
         }
     }
 
+    std::weak_ptr<RelaySession> RelayServer::FindSessionByDeviceId(const std::string& device_id) {
+        std::weak_ptr<RelaySession> target_sess;
+        sessions_.VisitAllCond([&](const int64_t socket_fd, const std::shared_ptr<WsSession>& sess) -> bool {
+            auto rs = std::dynamic_pointer_cast<RelaySession>(sess);
+            if (rs == nullptr) {
+                return false;
+            }
+            if (device_id == rs->GetDeviceId()) {
+                target_sess = rs;
+                return true;
+            }
+            return false;
+        });
+        return target_sess;
+    }
 }

@@ -16,7 +16,7 @@ namespace tc
     class RelayDevice {
     public:
         void Notify(const std::string& msg) const;
-        bool IsAlive() const;
+        [[nodiscard]] bool IsAlive() const;
 
     public:
         std::string device_id_;
