@@ -40,6 +40,7 @@ namespace tc
         std::string device_id_;
         std::string remote_device_id_;
         std::string room_id_;
+        int64_t last_update_timestamp_{0};
 
         ConcurrentHashMap<std::string, std::shared_ptr<RelayDevice>> devices_;
         std::shared_ptr<RelayContext> context_ = nullptr;

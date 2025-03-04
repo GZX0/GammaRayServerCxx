@@ -18,6 +18,7 @@ namespace tc
     class RelayRoom;
     class RelayContext;
     class RelayServer;
+    class RelayDeviceManager;
 
     class RelayRoomManager {
     public:
@@ -27,19 +28,17 @@ namespace tc
         std::optional<std::shared_ptr<RelayRoom>> CreateRoom(const std::string& device_id, const std::string& remote_device_id);
 
         //
-        std::optional<std::shared_ptr<RelayRoom>> RemoveRoom(const std::string& room_id);
+        bool RemoveRoom(const std::string& room_id);
 
-        // found: Room weak ptr
-        // not found: std::nullopt
-        std::optional<std::weak_ptr<RelayRoom>> FindRoom(const std::string& room_id);
+        //
+        std::shared_ptr<RelayRoom> FindRoom(const std::string& room_id);
 
-        // found: Peer weak ptr
-        // not found: std::nullopt
-        std::optional<std::weak_ptr<RelayDevice>> RemoveClientInRoom(const std::string& room_id, const std::string& device_id);
+        //
+        bool RemoveClientInRoom(const std::string& room_id, const std::string& device_id);
 
         uint32_t GetRoomCount();
 
-        std::vector<std::weak_ptr<RelayRoom>> FindRooms(int page, int page_size);
+        std::vector<std::shared_ptr<RelayRoom>> FindRooms(int page, int page_size);
 
         void DestroyCreatedRoomsBy(const std::string& device_id);
 
@@ -49,7 +48,7 @@ namespace tc
         std::shared_ptr<RelayContext> context_ = nullptr;
         std::shared_ptr<RelayServer> server_ = nullptr;
         std::shared_ptr<Redis> redis_ = nullptr;
-        ConcurrentHashMap<std::string, std::shared_ptr<RelayRoom>> rooms_;
+
     };
 
 }

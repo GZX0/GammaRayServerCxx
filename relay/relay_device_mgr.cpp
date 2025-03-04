@@ -23,7 +23,7 @@ namespace tc
         redis_ = context_->GetRedis();
     }
 
-    void RelayDeviceManager::AddDevice(const std::shared_ptr<RelayDevice>& device) {
+    bool RelayDeviceManager::AddDevice(const std::shared_ptr<RelayDevice>& device) {
         auto id = std::format("device:{}", device->device_id_);
         auto values = std::unordered_map<std::string, std::string>{
             {kRsDeviceId, device->device_id_},
@@ -32,45 +32,56 @@ namespace tc
         };
         try {
             redis_->hmset(id, values.begin(), values.end());
-        }
-        catch(std::exception& e) {
-            LOGE("HMSET failed: {}", e.what());
-        }
-    }
-
-    bool RelayDeviceManager::RemoveDevice(const std::string& device_id) {
-        try {
-            auto r = redis_->del(std::format("device:{}", device_id));
             return true;
         }
         catch(std::exception& e) {
-            LOGE("DEL failed: {} for: {}", e.what(), device_id);
+            LOGE("HMSET failed: {}", e.what());
             return false;
         }
     }
 
-    std::shared_ptr<RelayDevice> RelayDeviceManager::FindDevice(const std::string& device_id) {
+    bool RelayDeviceManager::RemoveDeviceById(const std::string& device_id) {
+        return this->RemoveDeviceByRedisKey(std::format("device:{}", device_id));
+    }
+
+    bool RelayDeviceManager::RemoveDeviceByRedisKey(const std::string& key) {
+        try {
+            auto r = redis_->del(key);
+            return r > 0;
+        }
+        catch(std::exception& e) {
+            LOGE("DEL failed: {} for: {}", e.what(), key);
+            return false;
+        }
+    }
+
+    std::shared_ptr<RelayDevice> RelayDeviceManager::FindDeviceById(const std::string& device_id) {
+        return this->FindDeviceByRedisKey(std::format("device:{}", device_id));
+    }
+
+    std::shared_ptr<RelayDevice> RelayDeviceManager::FindDeviceByRedisKey(const std::string& key) {
         auto target_client = std::make_shared<RelayDevice>();
         auto values = std::unordered_map<std::string, std::string>();
         try {
-            redis_->hgetall(std::format("device:{}", device_id), std::inserter(values, values.begin()));
-            if (!values.empty()) {
-                target_client->device_id_ = values[kRsDeviceId];
-                target_client->last_update_timestamp_ = std::atoll(values[kRsLastUpdateTimestamp].c_str());
-                target_client->socket_fd_ = std::atoll(values[kRsSocketFd].c_str());
+            redis_->hgetall(key, std::inserter(values, values.begin()));
+            if (values.empty()) {
+                return nullptr;
+            }
+            target_client->device_id_ = values[kRsDeviceId];
+            target_client->last_update_timestamp_ = std::atoll(values[kRsLastUpdateTimestamp].c_str());
+            target_client->socket_fd_ = std::atoll(values[kRsSocketFd].c_str());
 
-                // find by socket fd
-                if (auto sess_by_socket_fd
+            // find by socket fd
+            if (auto sess_by_socket_fd
                         = server_->FindSessionBySocketFd<RelaySession>(target_client->socket_fd_).lock(); sess_by_socket_fd) {
-                    target_client->sess_ = sess_by_socket_fd;
-                }
-                else if (auto sess_by_device_id
+                target_client->sess_ = sess_by_socket_fd;
+            }
+            else if (auto sess_by_device_id
                         = server_->FindSessionByDeviceId(target_client->device_id_).lock(); sess_by_device_id) {
-                    target_client->sess_ = sess_by_device_id;
-                }
-                else {
-                    return nullptr;
-                }
+                target_client->sess_ = sess_by_device_id;
+            }
+            else {
+                return nullptr;
             }
         }
         catch(std::exception& e) {
@@ -80,10 +91,15 @@ namespace tc
         return target_client;
     }
 
-    void RelayDeviceManager::OnHeartBeat(const std::string& device_id) {
+    void RelayDeviceManager::OnHeartBeat(int64_t socket_fd, const std::string& device_id) {
         auto id = std::format("device:{}", device_id);
         try {
-            redis_->hset(id, kRsLastUpdateTimestamp, std::to_string(TimeExt::GetCurrentTimestamp()));
+            std::unordered_map<std::string, std::string> values = {
+                {kRsDeviceId, device_id},
+                {kRsSocketFd, std::to_string(socket_fd)},
+                {kRsLastUpdateTimestamp, std::to_string(TimeExt::GetCurrentTimestamp())}
+            };
+            redis_->hmset(id, values.begin(), values.end());
         }
         catch(std::exception& e) {
             LOGE("HSET failed: {}", e.what());
@@ -110,23 +126,27 @@ namespace tc
         auto pattern = "device:*";
         auto count = page_size;
         std::unordered_set<std::string> keys;
-        while (true) {
-            cursor = redis_->scan(cursor, pattern, count, std::inserter(keys, keys.begin()));
-            if (cursor == 0) {
-                break;
+        cursor = redis_->scan(cursor, pattern, count, std::inserter(keys, keys.begin()));
+
+        LOGI("===> Total keys: {}", keys.size());
+        std::vector<std::shared_ptr<RelayDevice>> devices;
+        for (const auto& device_key : keys) {
+            LOGI("==> key: {}", device_key);
+            auto device = FindDeviceByRedisKey(device_key);
+            if (!device) {
+                LOGW("This device may not alive anymore: {}", device_key);
+                continue;
             }
-        }
-        for (const auto& k : keys) {
-            LOGI("==> key: {}", k);
+            devices.push_back(device);
         }
 
-        return {};
+        return devices;
     }
 
     void RelayDeviceManager::NotifyDeviceRoomDestroyed(const std::string& device_id, const std::string& remote_device_id, const std::string& room_id) {
         // device id: this device has left.
         // remote device id: this device will be notified
-        auto remote_device = FindDevice(remote_device_id);
+        auto remote_device = FindDeviceById(remote_device_id);
         if (!remote_device) {
             LOGW("Notify device: {} room: {} destroyed, but the device does not exist");
             return;

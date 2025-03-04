@@ -51,7 +51,7 @@ namespace tc
 
     void RelaySession::OnDisConnected() {
         room_mgr_->DestroyCreatedRoomsBy(this->device_id_);
-        device_mgr_->RemoveDevice(this->device_id_);
+        device_mgr_->RemoveDeviceById(this->device_id_);
     }
 
     void RelaySession::OnBinMessage(std::string_view data) {
@@ -93,7 +93,7 @@ namespace tc
     void RelaySession::ProcessHelloMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto from_device_id = msg->from_device_id();
         auto sub = msg->hello();
-        auto device = device_mgr_->FindDevice(from_device_id);
+        auto device = device_mgr_->FindDeviceById(from_device_id);
         if (!device) {
             LOGE("Can't find my device_id for: {}", from_device_id);
             // my state is illegal
@@ -107,7 +107,7 @@ namespace tc
     void RelaySession::ProcessHeartbeatMessage(std::shared_ptr<RelayMessage>&& msg) {
         auto device_id = msg->from_device_id();
         auto sub = msg->heartbeat();
-        auto device = device_mgr_->FindDevice(device_id);
+        auto device = device_mgr_->FindDeviceById(device_id);
         if (!device) {
             LOGE("Can't find my device_id for: {}", device_id);
             auto resp_msg
@@ -116,7 +116,7 @@ namespace tc
             return;
         }
         // for device
-        device_mgr_->OnHeartBeat(device_id);
+        device_mgr_->OnHeartBeat(socket_fd_, device_id);
         // for rooms created by this device
         room_mgr_->OnHeartBeatForMyRoom(device_id);
     }
@@ -127,12 +127,7 @@ namespace tc
         int room_size = sub.room_ids_size();
         for (int i = 0; i < room_size; i++) {
             auto room_id = sub.room_ids().at(i);
-            auto opt_room = room_mgr_->FindRoom(room_id);
-            if (!opt_room.has_value()) {
-                //LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
-                continue;
-            }
-            auto room = opt_room.value().lock();
+            auto room = room_mgr_->FindRoom(room_id);
             if (!room) {
                 //LOGW("Can't find room for id: {}, request device id: {}", room_id, from_device_id);
                 continue;
@@ -168,7 +163,7 @@ namespace tc
         const auto& device_id = sub.device_id();
         const auto& remote_device_id = sub.remote_device_id();
         // find remote client
-        auto remote_client = device_mgr_->FindDevice(remote_device_id);
+        auto remote_client = device_mgr_->FindDeviceById(remote_device_id);
         if (!remote_client || !remote_client->IsAlive()) {
             LOGE("Can't find client for remote: {}", remote_device_id);
             auto resp_msg
@@ -186,7 +181,7 @@ namespace tc
         auto sub = msg->request_control_resp();
         // requester
         const auto& req_device_id = sub.device_id();
-        auto req_device = device_mgr_->FindDevice(req_device_id);
+        auto req_device = device_mgr_->FindDeviceById(req_device_id);
         if (!req_device || !req_device->IsAlive()) {
             LOGE("Can't find client for requester: {}", req_device_id);
             auto resp_msg
@@ -201,20 +196,14 @@ namespace tc
         if (sub.under_control()) {
             // 0. make the two in same room
             auto room_id = sub.room_id();
-            auto opt_room = room_mgr_->FindRoom(room_id);
-            if (!opt_room.has_value()) {
-                LOGE("Room disappeared: {}", room_id);
-                return;
-            }
-
-            auto room = opt_room.value().lock();
+            auto room = room_mgr_->FindRoom(room_id);
             if (!room) {
                 LOGE("Room invalid: {}", room_id);
                 return;
             }
 
             //
-            auto resp_device = device_mgr_->FindDevice(sub.remote_device_id());
+            auto resp_device = device_mgr_->FindDeviceById(sub.remote_device_id());
             if (!resp_device) {
                 LOGE("Resp device invalid: {}", sub.remote_device_id());
                 return;

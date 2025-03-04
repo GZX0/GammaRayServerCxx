@@ -31,14 +31,14 @@ namespace tc
             return std::nullopt;
         }
         // check myself
-        auto device = pm->FindDevice(device_id);
+        auto device = pm->FindDeviceById(device_id);
         if (!device|| !device->IsAlive()) {
             LOGW("This peer[My Device] is not alive: {}", device_id);
             return std::nullopt;
         }
 
         // check remote device
-        auto remote_device = pm->FindDevice(remote_device_id);
+        auto remote_device = pm->FindDeviceById(remote_device_id);
         if (!remote_device || !remote_device->IsAlive()) {
             LOGW("This peer[Remote Client] is not alive: {}", remote_device_id);
             return std::nullopt;
@@ -52,7 +52,6 @@ namespace tc
         room->context_ = context_;
         room->devices_.Insert(device_id, device);
         room->devices_.Insert(remote_device_id, remote_device);
-        rooms_.Insert(room->room_id_, room);
 
         // insert to redis
         try {
@@ -71,58 +70,85 @@ namespace tc
         return room;
     }
 
-    std::optional<std::shared_ptr<RelayRoom>> RelayRoomManager::RemoveRoom(const std::string& room_id) {
-        auto r = rooms_.Remove(room_id);
-        return r;
-    }
-
-    std::optional<std::weak_ptr<RelayRoom>> RelayRoomManager::FindRoom(const std::string& room_id) {
-        std::weak_ptr<RelayRoom> target_room;
-        rooms_.ApplyAllCond([&] (const std::string& id, const std::shared_ptr<RelayRoom>& room) {
-            if (room_id == id) {
-                target_room = room;
-                return true;
-            }
+    bool RelayRoomManager::RemoveRoom(const std::string& room_id) {
+        try {
+            auto r = redis_->del(room_id);
+            return r > 0;
+        }
+        catch(std::exception& e) {
+            LOGE("DEL failed: {} for: {}", e.what(), room_id);
             return false;
-        });
-        if (target_room.lock()) {
-            return target_room;
         }
-        return std::nullopt;
     }
 
-    std::optional<std::weak_ptr<RelayDevice>> RelayRoomManager::RemoveClientInRoom(const std::string& room_id, const std::string& client_id) {
-        if (!rooms_.HasKey(room_id)) {
-            return std::nullopt;
+    std::shared_ptr<RelayRoom> RelayRoomManager::FindRoom(const std::string& room_id) {
+        try {
+            auto values = std::unordered_map<std::string, std::string>();
+            redis_->hgetall(room_id, std::inserter(values, values.begin()));
+            if (values.empty()) {
+                return nullptr;
+            }
+            auto room = std::make_shared<RelayRoom>();
+            room->room_id_ = values[kRsRoomId];
+            room->device_id_ = values[kRsRoomDeviceId];
+            room->remote_device_id_ = values[kRsRoomRemoteDeviceId];
+            room->last_update_timestamp_ = std::atoll(values[kRsRoomLastUpdateTimestamp].c_str());
+            auto device_mgr = context_->GetDeviceManager();
+            if (auto device = device_mgr->FindDeviceById(room->device_id_); device) {
+                room->devices_.Insert(room->device_id_, device);
+            }
+            if (auto remote_device = device_mgr->FindDeviceById(room->remote_device_id_); remote_device) {
+                room->devices_.Insert(room->remote_device_id_, remote_device);
+            }
+            return room;
         }
-        auto room = rooms_.Get(room_id);
-        if (room->devices_.HasKey(client_id)) {
-            auto client = room->devices_.Get(client_id);
-            return client;
+        catch (std::exception& e) {
+            LOGE("HGETALL failed: {} for room id: {}", e.what(), room_id);
         }
-        return std::nullopt;
+
+        return nullptr;
+    }
+
+    bool RelayRoomManager::RemoveClientInRoom(const std::string& room_id, const std::string& client_id) {
+        return false;
     }
 
     uint32_t RelayRoomManager::GetRoomCount() {
-        return rooms_.Size();
+        std::vector<std::string> keys;
+        try {
+            redis_->keys("room:*", std::back_inserter(keys));
+        }
+        catch(std::exception& e) {
+            LOGE("KEYS failed: {}", e.what());
+            return 0;
+        }
+        return keys.size();
     }
 
-    std::vector<std::weak_ptr<RelayRoom>> RelayRoomManager::FindRooms(int page, int page_size) {
+    std::vector<std::shared_ptr<RelayRoom>> RelayRoomManager::FindRooms(int page, int page_size) {
         int begin = std::max(0, page - 1) * page_size;
         int end = begin + page_size;
-        auto opt_rooms = rooms_.QueryRange(begin, end);
-        std::vector<std::weak_ptr<RelayRoom>> target_rooms;
-        if (opt_rooms.has_value()) {
-            auto rooms = opt_rooms.value();
-            for (const auto& r : rooms) {
-                target_rooms.push_back(r);
+
+        sw::redis::Cursor cursor = begin;
+        auto pattern = "room:*";
+        auto count = page_size;
+        std::unordered_set<std::string> keys;
+        while (true) {
+            cursor = redis_->scan(cursor, pattern, count, std::inserter(keys, keys.begin()));
+            if (cursor == 0) {
+                break;
             }
         }
-        return target_rooms;
+        for (const auto& k : keys) {
+            LOGI("==> key: {}", k);
+        }
+
+        return {};
     }
 
     void RelayRoomManager::DestroyCreatedRoomsBy(const std::string& device_id) {
         try {
+            auto device_mgr = context_->GetDeviceManager();
             std::vector<std::string> room_ids;
             redis_->keys(std::format("room:{}*", device_id), std::back_inserter(room_ids));
             if (room_ids.empty()) {
@@ -143,7 +169,6 @@ namespace tc
                         break;
                     }
                 }
-                auto device_mgr = context_->GetDeviceManager();
                 device_mgr->NotifyDeviceRoomDestroyed(device_id, remote_device_id, room_id);
 
                 // delete in redis

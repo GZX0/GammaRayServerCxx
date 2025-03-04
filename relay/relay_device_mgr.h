@@ -21,13 +21,15 @@ namespace tc
     public:
         explicit RelayDeviceManager(const std::shared_ptr<RelayContext>& ctx, const std::shared_ptr<RelayServer>& server);
         //
-        void AddDevice(const std::shared_ptr<RelayDevice>& device);
+        bool AddDevice(const std::shared_ptr<RelayDevice>& device);
         //
-        bool RemoveDevice(const std::string& device_id);
+        bool RemoveDeviceById(const std::string& device_id);
+        bool RemoveDeviceByRedisKey(const std::string& key);
         //
-        std::shared_ptr<RelayDevice> FindDevice(const std::string& device_id);
+        std::shared_ptr<RelayDevice> FindDeviceById(const std::string& device_id);
+        std::shared_ptr<RelayDevice> FindDeviceByRedisKey(const std::string& key);
         //
-        void OnHeartBeat(const std::string& device_id);
+        void OnHeartBeat(int64_t socket_fd, const std::string& device_id);
 
         // total count
         uint32_t GetClientCount();

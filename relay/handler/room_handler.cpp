@@ -41,12 +41,10 @@ namespace tc
                 auto rooms = room_mgr_->FindRooms(page, page_size);
                 json obj_array = json::array();
                 for (const auto& room : rooms) {
-                    if (auto r = room.lock(); r) {
-                        json obj;
-                        obj["room_id"] = r->room_id_;
-                        obj["device_id"] = r->device_id_;
-                        obj_array.push_back(obj);
-                    }
+                    json obj;
+                    obj["room_id"] = room->room_id_;
+                    obj["device_id"] = room->device_id_;
+                    obj_array.push_back(obj);
                 }
 
                 this->SendOkJson(resp, obj_array.dump());
