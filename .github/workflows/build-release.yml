@@ -1,0 +1,107 @@
+# For repository: GammaRayServerCxx
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+name: Build and publish release artifacts
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup build environment (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config
+
+      - name: Setup build environment (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System' ninja
+
+      - name: Configure with CMake
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake --build build --config ${{ matrix.build_type }} -- /m
+          else
+            cmake --build build --config ${{ matrix.build_type }} -- -j$(nproc || echo 2)
+          fi
+
+      - name: Package artifacts
+        run: |
+          mkdir -p artifacts
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            if [ -d build/bin ]; then
+              tar -czf artifacts/GammaRayServerCxx-linux-${{ github.ref_name }}.tar.gz -C build bin || true
+            else
+              tar -czf artifacts/GammaRayServerCxx-linux-${{ github.ref_name }}.tar.gz -C build . || true
+            fi
+          else
+            powershell -Command "
+              $OutDir = 'artifacts';
+              if (!(Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
+              $src = 'build\\bin\\Release'
+              if (Test-Path $src) {
+                Compress-Archive -Path $src\\* -DestinationPath $OutDir\\GammaRayServerCxx-windows-${{ github.ref_name }}.zip -Force
+              } elseif (Test-Path 'build\\bin') {
+                Compress-Archive -Path 'build\\bin\\*' -DestinationPath $OutDir\\GammaRayServerCxx-windows-${{ github.ref_name }}.zip -Force
+              } else {
+                Compress-Archive -Path 'build\\*' -DestinationPath $OutDir\\GammaRayServerCxx-windows-${{ github.ref_name }}.zip -Force
+              }
+            "
+          fi
+
+      - name: Upload job artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: artifacts/*
+
+  release:
+    name: Create GitHub Release and upload assets
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: downloaded_artifacts
+
+      - name: List downloaded files
+        run: |
+          echo "Files in downloaded_artifacts:"
+          ls -R downloaded_artifacts || true
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: downloaded_artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output release URL
+        if: success()
+        run: |
+          echo "Release for tag ${{ github.ref_name }} created (assets uploaded)."
